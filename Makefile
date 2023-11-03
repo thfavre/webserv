@@ -11,10 +11,10 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 # Source files
-SOURCES = main.cpp
+SOURCES = srcs/main.cpp
 
 # Object files
-OBJECTS = $(addprefix objs/, $(notdir $(SOURCES:.cpp=.o)))
+OBJECTS = $(SOURCES:.cpp=.o)
 
 # Target executable
 TARGET = webserv
@@ -23,24 +23,18 @@ all: $(TARGET)
 	@echo "$(COLOR_GREEN)Compilation completed successfully!$(COLOR_RESET)"
 
 $(TARGET): $(OBJECTS)
+	@echo "$(COLOR_YELLOW)Compiling srcs/main.cpp..$(COLOR_RESET)"
 	$(CXX) $(CXXFLAGS) $^ -o $@
 	@echo "$(COLOR_CYAN)Linking $(TARGET)...$(COLOR_RESET)"
 
-objs/%.o: %.cpp | objs
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-	@echo "$(COLOR_YELLOW)Compiling $<...$(COLOR_RESET)"
-
-objs:
-	mkdir -p objs
+.PHONY: all clean fclean re
 
 clean:
-	rm -rf objs
+	@rm -f $(OBJECTS)
 	@echo "$(COLOR_ORANGE)Object files removed!$(COLOR_RESET)"
 
 fclean: clean
-	rm -f $(TARGET)
-	@echo "$(COLOR_ORANGE)Executable removed!$(COLOR_RESET)"
+	@rm -f $(TARGET)
+	@echo "$(COLOR_RED)Executable removed!$(COLOR_RESET)"
 
 re: fclean all
-
-.PHONY: all clean fclean re
