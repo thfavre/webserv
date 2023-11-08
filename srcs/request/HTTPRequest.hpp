@@ -3,6 +3,9 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <vector>
+
+
 
 class HTTPRequest
 {
@@ -19,20 +22,26 @@ public:
 
 	class InvalidRequestException : public std::exception
 	{
-		public:
+	public:
 		InvalidRequestException(const std::string &message) : _message(message) {}
 		virtual const char *what(void) const throw()
 		{
 			return (_message.c_str());
 		}
 
+		InvalidRequestException(void)
+		{
+			_message = "Invalid request";
+		}
+
 	private:
-		InvalidRequestException(void) {}
 		std::string _message;
 	};
 
 private:
 	std::set<std::string> _acceptedMethods;
+	std::set<std::string> _acceptedHTTPProtocolVersions;
+
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -46,10 +55,10 @@ private:
 	void _parseRequestLine(const std::string &requestLine);
 	void _parseHeaders(const std::string &headersLines); // TODO call it Header (same for _headers)?
 	void _parseHeaderLine(const std::string &headerLine);
+	void _parseMethod(const std::string &method);
+	void _parsePath(const std::string &path);
+	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
 	void _parseBody(const std::string &bodyLines);
-
-	// validation // TODO rename comment name
-	bool _isMethodValid(const std::string &method) const;
 };
 
 #endif // HTTPREQUEST_HPP
