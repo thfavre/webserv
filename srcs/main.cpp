@@ -6,26 +6,33 @@ void httpRequestTest();
 
 int main()
 {
-	// httpRequestTest();
+	httpRequestTest();
 }
 
 
 void httpRequestTest()
 {
-	// Currently don't work with \r\n separator...
-	std::string requestData = "GET /index.html HTTP/1.1\n"
-						  "Host: www.google.com\n"
-						  "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0\n"
-						  "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\n"
-						  "Accept-Language: en-US,en;q=0.5\n"
-						  "Accept-Encoding: gzip, deflate, br\n"
-						  "Connection: keep-alive\n"
-						  "Upgrade-Insecure-Requests: 1\n"
-						  "Cache-Control: max-age=0\n"
-						  "\n"
+	std::string requestData = "GET /index.html HTTP/1.1\r\n"
+						  "Host: www.google.com\r\n"
+						  "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0\r\n"
+						  "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"
+						  "Accept-Language: en-US,en;q=0.5\r\n"
+						  "Accept-Encoding: gzip, deflate, br\r\n"
+						  "Connection: keep-alive\r\n"
+						  "Upgrade-Insecure-Requests: 1\r\n"
+						  "Cache-Control: max-age=0\r\n"
+						  "\r\n"
 						  "<html>...</html>";
 
 	HTTPRequest request(requestData);
+	# define YELLOW "\033[33m"
+	# define CYAN "\033[36m"
+	# define BOLD "\033[1m"
+	# define RESET "\033[0m"
+	std::cout << BOLD << "Request Infos:" << RESET << std::endl;
+	std::cout << YELLOW <<  request   << RESET << std::endl;
 
-	std::cout << request << std::endl;
+	std::cout << BOLD << "Get individual:" << RESET << std::endl;
+	std::cout  << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
+	std::cout  << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
 }

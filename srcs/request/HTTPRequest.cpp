@@ -1,13 +1,59 @@
 #include <sstream>
 #include <map>
+#include <vector>
 
 #include "HTTPRequest.hpp"
 
+// ! TODO put somewhere else
+template <typename T>
+std::vector<T> split(const std::string& str, const T& delimiter) {
+  std::vector<T> tokens;
+  std::size_t start = 0;
+  std::size_t pos = 0;
+
+  while ((pos = str.find(delimiter, start)) != std::string::npos) {
+    tokens.push_back(str.substr(start, pos - start));
+    start = pos + delimiter.length();
+  }
+
+  if (start < str.length()) {
+    tokens.push_back(str.substr(start));
+  }
+
+  return tokens;
+}
+
+// max is the maximum number of splits
+template <typename T>
+std::vector<T> split(const std::string& str, const T& delimiter, int max) {
+  std::vector<T> tokens;
+  std::size_t start = 0;
+  std::size_t pos = 0;
+  int splits = 0;
+
+  while ((pos = str.find(delimiter, start)) != std::string::npos) {
+    if (splits < max - 1) {
+      tokens.push_back(str.substr(start, pos - start));
+      splits++;
+      start = pos + delimiter.length();
+    } else {
+      break;
+    }
+  }
+
+  if (start < str.length()) {
+    tokens.push_back(str.substr(start));
+  }
+
+  return tokens;
+}
+
+#define LINE_END "\r\n"
+
 HTTPRequest::HTTPRequest(const std::string &requestData)
 {
-	_acceptedMethods = {"GET", "POST", "PUT", "DELETE", "HEAD"}; // ? TODO where to put it (separate file,...)? // ? TODO do we only accept that?
-	std::istringstream requestStream(requestData);				 // ? TODO is C++98?
-	_parseRequest(requestStream);
+	_acceptedMethods = {"GET", "POST", "PUT", "DELETE", "HEAD"}; // ? TODO where to put it (separate file, public static?...)? // ? TODO do we only accept that?
+	_parseRequest(requestData);
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
@@ -31,27 +77,51 @@ std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
 	return (stream);
 }
 
-void HTTPRequest::_parseRequest(std::istringstream &requestStream)
-{
+void HTTPRequest::_parseRequest(std::string requestData) {
+  try {
+    // Parse the request components
+    std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
+    if (requestParts.size() != 2) {
+      throw HTTPRequest::InvalidRequestException("Invalid request format");
+    }
 
-	// requestLine : first line of the request
-	_parseRequestLine(requestStream);
+    std::string requestHeaderSection = requestParts[0];
+    std::string body = requestParts[1];
 
-	// headers :all the lines until the empty line
-	_parseHeaders(requestStream);
+    std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
+    if (requestHeaderLines.size() == 0) {
+      throw HTTPRequest::InvalidRequestException("Missing request line");
+    }
 
-	// body : all the line after the empty line
-	_parseBody(requestStream);
+    std::string requestLine = requestHeaderLines[0];
+    std::string headersWithoutRequestLine = "";
+    if (requestHeaderLines.size() == 2) {
+      headersWithoutRequestLine = requestHeaderLines[1];
+    }
+
+    // Parse the request line
+    _parseRequestLine(requestLine);
+
+    // Parse the headers
+    _parseHeaders(headersWithoutRequestLine);
+
+    // Parse the body
+    _parseBody(body);
+  } catch (InvalidRequestException& e) {
+    // Handle invalid request error
+	std::cerr << "Error: " << e.what() << std::endl;
+  }
 }
 
-void HTTPRequest::_parseRequestLine(std::istringstream &requestStream) // ? TODO should return a bool ?
+
+
+void HTTPRequest::_parseRequestLine(const std::string& requestLine) // ? TODO should return a bool ?
 {
-	std::string requestLine;
+	// std::string requestLine;
 	std::string requestMethod;
 	std::string requestPath;
 	std::string httpProtocolVersion;
 	// TODO parse each component of the request line in a separate function
-	std::getline(requestStream, requestLine);
 	std::istringstream requestLineStream(requestLine);
 	std::getline(requestLineStream, requestMethod, ' ');
 	std::getline(requestLineStream, requestPath, ' ');
@@ -59,14 +129,14 @@ void HTTPRequest::_parseRequestLine(std::istringstream &requestStream) // ? TODO
 
 	if (requestMethod.empty() || requestPath.empty() || httpProtocolVersion.empty())
 	{
-		std::cerr << "Error ? requestMethod, requestPath or httpProtocolVersion does not exit" << std::endl;
+		// std::cerr << "Error ? requestMethod, requestPath or httpProtocolVersion does not exit" << std::endl;
 		return;
 	}
 
 	// check if correct method
 	if (!_isMethodValid(requestMethod))
 	{
-		std::cerr << "Error ? requestMethod is not valid" << std::endl;
+		// std::cerr << "Error ? requestMethod is not valid" << std::endl;
 		return;
 	}
 	_requestMethod = requestMethod;
@@ -78,7 +148,7 @@ void HTTPRequest::_parseRequestLine(std::istringstream &requestStream) // ? TODO
 	// check if correct version
 	if (httpProtocolVersion != "HTTP/1.0" && httpProtocolVersion != "HTTP/1.1") // ? TODO do we only accept that?
 	{
-		std::cerr << "Error ? httpProtocolVersion (" << httpProtocolVersion << ") is not HTTP/1.1" << std::endl;
+		// std::cerr << "Error ? httpProtocolVersion (" << httpProtocolVersion << ") is not HTTP/1.1" << std::endl;
 		return;
 	}
 	_httpProtocolVersion = httpProtocolVersion;
@@ -87,11 +157,14 @@ void HTTPRequest::_parseRequestLine(std::istringstream &requestStream) // ? TODO
 
 }
 
-void HTTPRequest::_parseHeaders(std::istringstream &requestStream)
+void HTTPRequest::_parseHeaders(const std::string& headersLines)
 {
-	std::string currentHeaderLine;
-	while (std::getline(requestStream, currentHeaderLine) && !currentHeaderLine.empty())
-		_parseHeaderLine(currentHeaderLine);
+	std::vector<std::string> headersLinesVector = split(headersLines, std::string(LINE_END));
+	for (std::vector<std::string>::iterator headerLine = headersLinesVector.begin();
+		 headerLine != headersLinesVector.end(); ++headerLine)
+	{
+		_parseHeaderLine(*headerLine);
+	}
 }
 
 void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
@@ -106,7 +179,7 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 
 	if (headerValue.length() == 0)
 	{
-		std::cerr << "Error ? " << headerValue << " of " << headerName << " does not exit" << std::endl;
+		// std::cerr << "Error ? " << headerValue << " of " << headerName << " does not exit" << std::endl;
 		return;
 	}
 
@@ -115,9 +188,9 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 	_headers[headerName] = headerValue;
 }
 
-void HTTPRequest::_parseBody(std::istringstream &requestStream)
+void HTTPRequest::_parseBody(const std::string& bodyLines)
 {
-	std::getline(requestStream, _body, '\0');
+	_body = bodyLines;
 }
 
 
