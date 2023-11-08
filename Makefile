@@ -8,10 +8,10 @@ COLOR_ORANGE = \033[1;38;5;208m
 
 # Compiler settings
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = #-Wall -Wextra -Werror -std=c++98
 
 # Source files
-SOURCES = srcs/main.cpp
+SOURCES = srcs/main.cpp srcs/request/HTTPRequest.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -23,7 +23,7 @@ all: $(TARGET)
 	@echo "$(COLOR_GREEN)Compilation completed successfully!$(COLOR_RESET)"
 
 $(TARGET): $(OBJECTS)
-	@echo "$(COLOR_YELLOW)Compiling srcs/main.cpp..$(COLOR_RESET)"
+#	 @echo "$(COLOR_YELLOW)Compiling srcs/main.cpp..$(COLOR_RESET)"
 	$(CXX) $(CXXFLAGS) $^ -o $@
 	@echo "$(COLOR_CYAN)Linking $(TARGET)...$(COLOR_RESET)"
 
