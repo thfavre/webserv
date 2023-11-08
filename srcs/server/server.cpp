@@ -62,7 +62,7 @@ void	Server::accept_connection()
 	/*
 	Handle the read of the connection and what needs to be done
 	*/
-	std::string	response = "Here is the ansswer\n";
+	std::string	response = "Here is the answer\n";
 	send(connection, response.c_str(), response.size(), 0);
 
 	this->close(connection);
