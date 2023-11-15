@@ -5,7 +5,7 @@ void httpRequestTest();
 
 int main()
 {
-	// httpRequestTest();
+	httpRequestTest();
 }
 
 void httpRequestTest()
@@ -38,6 +38,6 @@ void httpRequestTest()
 	}
 	catch (const std::exception &e)
 	{
-		std::cerr << RED <<"Error: " <<RESET << e.what() << '\n';
+		std::cerr << RED <<"Error: " << RESET << e.what() << '\n';
 	}
 }

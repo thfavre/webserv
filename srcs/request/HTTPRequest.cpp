@@ -5,21 +5,41 @@
 #include "HTTPRequest.hpp"
 #include "split.cpp" // TODO .hpp instead of .cpp
 
-
 #define LINE_END "\r\n"
 
+const std::set<std::string> HTTPRequest::_initAcceptedMethods()
+{
+	std::set<std::string> methods;
+	methods.insert("GET");
+	methods.insert("POST");
+	methods.insert("PUT");
+	methods.insert("DELETE");
+	methods.insert("HEAD");
+	return (methods);
+}
+
+const std::set<std::string> HTTPRequest::_acceptedMethods = HTTPRequest::_initAcceptedMethods();
+
+const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
+{
+	std::set<std::string> httpProtocolVersions;
+	httpProtocolVersions.insert("HTTP/1.0");
+	httpProtocolVersions.insert("HTTP/1.1");
+	return (httpProtocolVersions);
+}
+
+const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
 HTTPRequest::HTTPRequest(const std::string &requestData)
 {
-	std:: vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
-	_acceptedMethods = {"GET", "POST", "PUT", "DELETE", "HEAD"}; // ? TODO where to put it (separate file, public static?...)? // ? TODO do we only accept that?
-	_acceptedHTTPProtocolVersions = {"HTTP/1.0", "HTTP/1.1"};	 // ? TODO where to put it (separate file, public static?...)? // ? TODO do we only accept that?
+	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
+
 	_parseRequest(requestData);
 }
 
 void HTTPRequest::_parseRequest(std::string requestData)
 {
-	// try
+	// try // ? TODO should it catch the exception (and set a flag?) or throw it?
 	// {
 	// Parse the request components
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
@@ -36,9 +56,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	std::string requestLine = requestHeaderLines[0];
 	std::string headersWithoutRequestLine = "";
 	if (requestHeaderLines.size() == 2)
-	{
 		headersWithoutRequestLine = requestHeaderLines[1];
-	}
 
 	// Parse the request line
 	_parseRequestLine(requestLine);
@@ -48,6 +66,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 
 	// Parse the body
 	_parseBody(body);
+
 	// }
 	// catch (InvalidRequestException &e)
 	// {
@@ -68,7 +87,6 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	std::getline(requestLineStream, requestPath, ' ');
 	std::getline(requestLineStream, httpProtocolVersion);
 
-	std::cout << "requestMethod: " << requestMethod << std::endl;
 	_parseMethod(requestMethod);
 
 	_parsePath(requestPath);
@@ -152,10 +170,10 @@ const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 	return (_headers.at(headerName));
 }
 
-const std::map<std::string, std::string> HTTPRequest::_getHeaders() const
-{
-	return (_headers);
-}
+// const std::map<std::string, std::string> HTTPRequest::_getHeaders() const
+// {
+// 	return (_headers);
+// }
 
 const std::string &HTTPRequest::getBody() const
 {

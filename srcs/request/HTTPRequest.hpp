@@ -28,19 +28,16 @@ public:
 		{
 			return (_message.c_str());
 		}
-
-		InvalidRequestException(void)
-		{
-			_message = "Invalid request";
-		}
+		virtual ~InvalidRequestException() throw() {}
+		InvalidRequestException(void) : _message("Invalid request") {}
 
 	private:
 		std::string _message;
 	};
 
 private:
-	std::set<std::string> _acceptedMethods;
-	std::set<std::string> _acceptedHTTPProtocolVersions;
+	static const std::set<std::string> _acceptedMethods;
+	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
@@ -48,7 +45,10 @@ private:
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
 
-	const std::map<std::string, std::string> _getHeaders() const;
+	// const std::map<std::string, std::string> _getHeaders() const;
+
+	static const std::set<std::string> _initAcceptedMethods(); // TODO const?
+	static const std::set<std::string> _initAcceptedHTTPProtocolVersions();
 
 	// parse
 	void _parseRequest(std::string requestData);
