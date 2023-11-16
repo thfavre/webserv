@@ -2,12 +2,14 @@
 # define SPLIT_HPP
 # include <string>
 # include <vector>
-#include <sstream>
+# include <sstream>
 
 template <typename T>
 std::vector<T> split(const std::string &str, const T &delimiter);
 
 template <typename T>
 std::vector<T> split(const std::string &str, const T &delimiter, int max);
+
+# include "split.cpp"
 
 #endif

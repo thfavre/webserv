@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "HTTPRequest.hpp"
-#include "split.cpp" // TODO .hpp instead of .cpp
+#include "split.hpp"
 
 #define LINE_END "\r\n"
 
@@ -43,15 +43,15 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	// {
 	// Parse the request components
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
-	if (requestParts.size() != 2)
-		throw HTTPRequest::InvalidRequestException("Invalid request format");
+	if (requestParts.size() != 2) // 400
+		throw HTTPRequest::InvalidRequestException("Invalid request format"); // TODO error code
 
 	std::string requestHeaderSection = requestParts[0];
 	std::string body = requestParts[1];
 
 	std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
-	if (requestHeaderLines.size() == 0)
-		throw HTTPRequest::InvalidRequestException("Missing request line");
+	if (requestHeaderLines.size() == 0) // 400
+		throw HTTPRequest::InvalidRequestException("Missing request line"); // TODO error code
 
 	std::string requestLine = requestHeaderLines[0];
 	std::string headersWithoutRequestLine = "";
@@ -97,22 +97,66 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 void HTTPRequest::_parseMethod(const std::string &method)
 {
 	if (method.empty() || _acceptedMethods.find(method) == _acceptedMethods.end())
+	{
+		_error_code = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
+	}
 	_requestMethod = method;
 }
+
+#include <regex> // ! TODO should I define those functions in the hpp?
+bool isValidPath(const std::string &path)
+{
+	// Define a regular expression for a valid path
+	std::regex pathRegex("^[a-zA-Z0-9_\\-\\.~:/?#\\[\\]@!$&'()*+,;=]*$");
+	return std::regex_match(path, pathRegex);
+}
+
+bool isSafePath(const std::string &path)
+{
+	// Check for directory traversal
+	return path.find("..") == std::string::npos;
+}
+
+bool isPathLengthValid(const std::string &path, size_t maxLength)
+{
+	return path.length() <= maxLength;
+}
+
+bool isPathValid(const std::string &path, size_t maxLength)
+{
+	return isValidPath(path) && isSafePath(path) && isPathLengthValid(path, maxLength);
+}
+#define MAX_PATH_LENGTH 4096
 
 void HTTPRequest::_parsePath(const std::string &path)
 {
 	// ? TODO check if path is valid, what is a valid path?
 	if (path.empty())
-		throw(HTTPRequest::InvalidRequestException("Invalid path '" + path + "'"));
+	{
+		_error_code = 400;
+		throw(HTTPRequest::InvalidRequestException("No path specified"));
+	}
+	if (!isPathValid(path, MAX_PATH_LENGTH)) // do custom error code / message? 414 Request-URI Too Long
+	{
+		_error_code = 400;
+		throw HTTPRequest::InvalidRequestException("Invalid path '" + path + "'");
+	}
+	// ? TODO 400 should start with /
+	// TODO 400 should only contains valid char
+	// TODO 414 should not be longer than MAX_URI_LENGTH (4096?) // NOT needed in HTTP/1.1
+	// ? TODO really should not contains .. or than there is more .. than /?
+
 	_requestPath = path;
 }
 
 void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersion)
 {
 	if (httpProtocolVersion.empty() || _acceptedHTTPProtocolVersions.find(httpProtocolVersion) == _acceptedHTTPProtocolVersions.end())
+	{
+		_error_code = 505; // HTTP Version Not Supported
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP protocol version '" + httpProtocolVersion + "'"));
+	}
 	_httpProtocolVersion = httpProtocolVersion;
 }
 
@@ -135,7 +179,10 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 	std::getline(headerLineStream, headerName, ':');
 	std::getline(headerLineStream, headerValue);
 	if (headerValue.length() == 0)
+	{
+		_error_code = 400;
 		throw(HTTPRequest::InvalidRequestException("Invalid header value for header '" + headerName + "'"));
+	}
 
 	if (headerValue[0] == ' ')
 		headerValue.erase(0, 1);
@@ -166,7 +213,7 @@ const std::string &HTTPRequest::getHttpProtocolVersion() const
 const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 {
 	if (_headers.find(headerName) == _headers.end())
-		throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found"));
+		throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found")); // ? TODO should it return an empty string instead?
 	return (_headers.at(headerName));
 }
 

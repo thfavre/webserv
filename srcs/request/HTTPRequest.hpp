@@ -39,6 +39,7 @@ private:
 	static const std::set<std::string> _acceptedMethods;
 	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
+	int _error_code;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
