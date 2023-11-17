@@ -5,22 +5,29 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <map>
+#include <poll.h>
+
+#define MAX_FDS 200
+#define PORT 8080
 
 class Server
 {
-	int				_port;
-	int				_socket;
+	int				_listening_socket;
 	sockaddr_in		_sockaddr;
-	Server();
+	pollfd			_fds[MAX_FDS];
+
 
 	public:
-		Server(int port);
+		Server();
 		~Server();
 
 		void	setup();
-		void	listen_connection();
 		void	handle_request(int client_socket);
 		void	accept_connection();
+		void	read_data(int i);
+		void	send_data(int i);
+		void	run();
 		void	close(int connection);
 };
 
