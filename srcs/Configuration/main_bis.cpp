@@ -1,4 +1,5 @@
 #include <iostream>
+#include "ConfigCheck.hpp"
 
 int	main(int argc, char *argv[])
 {
@@ -9,7 +10,7 @@ int	main(int argc, char *argv[])
 	}
 	try
 	{
-		blabla
+		ConfigCheck	Config(argv[1]);
 	}
 	catch (std::exception& e)
 	{
