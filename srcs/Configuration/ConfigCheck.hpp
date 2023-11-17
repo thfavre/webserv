@@ -2,6 +2,9 @@
 # define CONFIGCHECK_HPP
 
 #include <iostream>
+#include <unistd.h>
+#include <sstream>
+#include <fstream>
 
 class ConfigCheck
 {
@@ -12,12 +15,14 @@ class ConfigCheck
 
 		ConfigCheck &operator=(ConfigCheck const & rhs);
 
+		std::string	getFileContent(void) const;
 
 
 	private :
 		ConfigCheck(void);
-		std::string _ContentFile;
-		std::string	_path;
+		std::string	CheckFile(std::string path);
+		std::string _FileContent;
+		std::string	_Path;
 };
 
 #endif
