@@ -32,53 +32,54 @@ const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPReq
 
 HTTPRequest::HTTPRequest(const std::string &requestData)
 {
+	_error_code = 0;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
-
 	_parseRequest(requestData);
 }
 
 void HTTPRequest::_parseRequest(std::string requestData)
 {
-	// try // ? TODO should it catch the exception (and set a flag?) or throw it?
-	// {
-	// Parse the request components
-	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
-	if (requestParts.size() != 2) // 400
-		throw HTTPRequest::InvalidRequestException("Invalid request format"); // TODO error code
+	try
+	{
+		// Parse the request components
+		std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
+		if (requestParts.size() != 2)
+		{
+			_error_code = 400;
+			throw HTTPRequest::InvalidRequestException("Invalid request format");
+		}
 
-	std::string requestHeaderSection = requestParts[0];
-	std::string body = requestParts[1];
+		std::string requestHeaderSection = requestParts[0];
+		std::string body = requestParts[1];
 
-	std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
-	if (requestHeaderLines.size() == 0) // 400
-		throw HTTPRequest::InvalidRequestException("Missing request line"); // TODO error code
+		std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
+		if (requestHeaderLines.size() == 0)
+		{
+			_error_code = 400;
+			throw HTTPRequest::InvalidRequestException("Missing request line");
+		}
 
-	std::string requestLine = requestHeaderLines[0];
-	std::string headersWithoutRequestLine = "";
-	if (requestHeaderLines.size() == 2)
-		headersWithoutRequestLine = requestHeaderLines[1];
+		std::string requestLine = requestHeaderLines[0];
+		std::string headersWithoutRequestLine = "";
+		if (requestHeaderLines.size() == 2)
+			headersWithoutRequestLine = requestHeaderLines[1];
 
-	// Parse the request line
-	_parseRequestLine(requestLine);
-
-	// Parse the headers
-	_parseHeaders(headersWithoutRequestLine);
-
-	// Parse the body
-	_parseBody(body);
-
-	// }
-	// catch (InvalidRequestException &e)
-	// {
-	// 	// Handle invalid request error
-	// 	std::cerr << "Error: " << e.what() << std::endl;
-	// }
+		_parseRequestLine(requestLine);
+		_parseHeaders(headersWithoutRequestLine);
+		_parseBody(body);
+	}
+	catch (InvalidRequestException &e)
+	{
+		// Handle invalid request error
+		if (_error_code == 0)
+			_error_code = 400;
+		std::cerr << "Error " << _error_code <<": " << e.what() << std::endl;
+	}
 }
 
 void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO should return a bool instead of throwing an exception ?
 {
-	// ? simply use a vector instead of a string stream?
-	// std::string requestLine;
+	// ? TODO simply use a vector instead of a string stream?
 	std::string requestMethod;
 	std::string requestPath;
 	std::string httpProtocolVersion;
@@ -88,9 +89,7 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	std::getline(requestLineStream, httpProtocolVersion);
 
 	_parseMethod(requestMethod);
-
 	_parsePath(requestPath);
-
 	_parseHttpProtocolVersion(httpProtocolVersion);
 }
 
@@ -104,49 +103,50 @@ void HTTPRequest::_parseMethod(const std::string &method)
 	_requestMethod = method;
 }
 
-#include <regex> // ! TODO should I define those functions in the hpp?
-bool isValidPath(const std::string &path)
+bool HTTPRequest::_areAllPathCharactersValid(const std::string &path)
 {
-	// Define a regular expression for a valid path
-	std::regex pathRegex("^[a-zA-Z0-9_\\-\\.~:/?#\\[\\]@!$&'()*+,;=]*$");
-	return std::regex_match(path, pathRegex);
+	const std::string allowedSpecialChars = "_-.~:/?#[]@!$&'()*+,;=";
+	for (size_t i = 0; i < path.length(); i++)
+	{
+		if (!isalnum(path[i]) && allowedSpecialChars.find(path[i]) == std::string::npos)
+			return false;
+	}
+	return true;
 }
 
-bool isSafePath(const std::string &path)
+bool HTTPRequest::_isSafePath(const std::string &path)
 {
 	// Check for directory traversal
 	return path.find("..") == std::string::npos;
 }
 
-bool isPathLengthValid(const std::string &path, size_t maxLength)
+bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 {
 	return path.length() <= maxLength;
 }
 
-bool isPathValid(const std::string &path, size_t maxLength)
-{
-	return isValidPath(path) && isSafePath(path) && isPathLengthValid(path, maxLength);
-}
-#define MAX_PATH_LENGTH 4096
-
 void HTTPRequest::_parsePath(const std::string &path)
 {
-	// ? TODO check if path is valid, what is a valid path?
 	if (path.empty())
 	{
 		_error_code = 400;
 		throw(HTTPRequest::InvalidRequestException("No path specified"));
 	}
-	if (!isPathValid(path, MAX_PATH_LENGTH)) // do custom error code / message? 414 Request-URI Too Long
+	if (!_areAllPathCharactersValid(path))
 	{
 		_error_code = 400;
 		throw HTTPRequest::InvalidRequestException("Invalid path '" + path + "'");
 	}
-	// ? TODO 400 should start with /
-	// TODO 400 should only contains valid char
-	// TODO 414 should not be longer than MAX_URI_LENGTH (4096?) // NOT needed in HTTP/1.1
-	// ? TODO really should not contains .. or than there is more .. than /?
-
+	if (!_isSafePath(path))
+	{
+		_error_code = 403;
+		throw HTTPRequest::InvalidRequestException("Invalid path '" + path + "'");
+	}
+	if (!_isPathLengthValid(path, MAX_PATH_LENGTH))
+	{
+		_error_code = 414;
+		throw HTTPRequest::InvalidRequestException("Path '" + path + "' too long");
+	}
 	_requestPath = path;
 }
 
@@ -154,7 +154,7 @@ void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersi
 {
 	if (httpProtocolVersion.empty() || _acceptedHTTPProtocolVersions.find(httpProtocolVersion) == _acceptedHTTPProtocolVersions.end())
 	{
-		_error_code = 505; // HTTP Version Not Supported
+		_error_code = 505;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP protocol version '" + httpProtocolVersion + "'"));
 	}
 	_httpProtocolVersion = httpProtocolVersion;
@@ -194,7 +194,12 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	_body = bodyLines;
 }
 
-/* ****** Getters ****** */ // ! TODO best way / better way to write all getters (otehr file,..)
+bool HTTPRequest::isError() const
+{
+	return (_error_code != 0);
+}
+
+/* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)
 const std::string &HTTPRequest::getMethod() const
 {
 	return (_requestMethod);
@@ -213,7 +218,8 @@ const std::string &HTTPRequest::getHttpProtocolVersion() const
 const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 {
 	if (_headers.find(headerName) == _headers.end())
-		throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found")); // ? TODO should it return an empty string instead?
+		// throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found")); // ? TODO should it return an empty string instead?
+		return ("");
 	return (_headers.at(headerName));
 }
 
@@ -225,6 +231,11 @@ const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 const std::string &HTTPRequest::getBody() const
 {
 	return (_body);
+}
+
+const int &HTTPRequest::getErrorCode() const
+{
+	return (_error_code);
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)

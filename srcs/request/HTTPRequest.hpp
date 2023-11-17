@@ -5,12 +5,11 @@
 #include <set>
 #include <vector>
 
-
+#define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
 
 class HTTPRequest
 {
 public:
-	// ? static variable something like parseError or parsingComplete
 	// HTTPRequest();
 	HTTPRequest(const std::string &requestData);
 	friend std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request);
@@ -19,6 +18,8 @@ public:
 	const std::string &getHttpProtocolVersion() const;
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
+	const int &getErrorCode() const;
+	bool isError() const;
 
 	class InvalidRequestException : public std::exception
 	{
@@ -48,16 +49,19 @@ private:
 
 	// const std::map<std::string, std::string> _getHeaders() const;
 
-	static const std::set<std::string> _initAcceptedMethods(); // TODO const?
+	static const std::set<std::string> _initAcceptedMethods();
 	static const std::set<std::string> _initAcceptedHTTPProtocolVersions();
 
 	// parse
 	void _parseRequest(std::string requestData);
 	void _parseRequestLine(const std::string &requestLine);
-	void _parseHeaders(const std::string &headersLines); // TODO call it Header (same for _headers)?
+	void _parseHeaders(const std::string &headersLines);
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
 	void _parsePath(const std::string &path);
+	bool _areAllPathCharactersValid(const std::string &path);
+	bool _isSafePath(const std::string &path);
+	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
 	void _parseBody(const std::string &bodyLines);
 };

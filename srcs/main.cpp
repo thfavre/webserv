@@ -21,9 +21,11 @@ void httpRequestTest()
 							  "Cache-Control: max-age=0\r\n"
 							  "\r\n"
 							  "<html>...</html>";
-	try
+	HTTPRequest request(requestData);
+
+	if (!request.isError())
 	{
-		HTTPRequest request(requestData);
+
 		#define YELLOW "\033[33m"
 		#define CYAN "\033[36m"
 		#define RED "\033[31m"
@@ -35,9 +37,5 @@ void httpRequestTest()
 		std::cout << BOLD << "Get individual:" << RESET << std::endl;
 		std::cout << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
-	}
-	catch (const std::exception &e)
-	{
-		std::cerr << RED <<"Error: " << RESET << e.what() << '\n';
 	}
 }

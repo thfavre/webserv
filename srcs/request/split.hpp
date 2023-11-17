@@ -2,14 +2,9 @@
 # define SPLIT_HPP
 # include <string>
 # include <vector>
-# include <sstream>
 
-template <typename T>
-std::vector<T> split(const std::string &str, const T &delimiter);
+std::vector<std::string> split(const std::string &str, const std::string &delimiter);
 
-template <typename T>
-std::vector<T> split(const std::string &str, const T &delimiter, int max);
-
-# include "split.cpp"
+std::vector<std::string> split(const std::string &str, const std::string &delimiter, int max);
 
 #endif
