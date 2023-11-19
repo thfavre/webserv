@@ -5,7 +5,7 @@ void httpRequestTest();
 
 int main()
 {
-	httpRequestTest();
+	// httpRequestTest();
 }
 
 void httpRequestTest()
