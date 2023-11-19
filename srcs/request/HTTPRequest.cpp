@@ -73,7 +73,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 		// Handle invalid request error
 		if (_error_code == 0)
 			_error_code = 400;
-		std::cerr << "Error " << _error_code <<": " << e.what() << std::endl;
+		std::cerr << "Error " << _error_code << ": " << e.what() << std::endl;
 	}
 }
 
@@ -217,9 +217,10 @@ const std::string &HTTPRequest::getHttpProtocolVersion() const
 
 const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 {
+	static const std::string emptyString = "";
 	if (_headers.find(headerName) == _headers.end())
 		// throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found")); // ? TODO should it return an empty string instead?
-		return ("");
+		return (emptyString);
 	return (_headers.at(headerName));
 }
 
