@@ -21,12 +21,14 @@ class Server
 	public:
 		Server();
 		~Server();
+		Server(const Server &src) = delete;
+		Server	&operator=(const Server &src) = delete;
 
 		void	setup();
-		void	handle_request(int client_socket);
+		void	handle_request(std::string const &request_raw);
 		void	accept_connection();
 		void	read_data(int i);
-		void	send_data(int i);
+		void	send_response(int i);
 		void	run();
 		void	close(int connection);
 };

@@ -47,11 +47,16 @@ void	Server::setup()
 	this->_fds[0].events = POLLIN;
 }
 
-void	Server::handle_request(int client_request)
+void	Server::handle_request(std::string const &request_raw)
 {
 	/*
-	Might be something to do in the parser and then execute from here
+	!! Need to merge the Request Parser !!
 	*/
+	// HTTPRequest	request(request_raw);
+	// if (!request.isError())
+	// {
+	// 	//TODO: process the request
+	// }
 }
 
 void	Server::accept_connection()
@@ -106,9 +111,7 @@ void	Server::run()
 					if (this->_fds[i].revents & POLLIN)
 						read_data(i);
 					if (this->_fds[i].revents & POLLOUT)
-					{
-						send_data(i);
-					}
+						send_response(i);
 					if (this->_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 					{
 						close(this->_fds[i].fd);
@@ -123,17 +126,22 @@ void	Server::run()
 void	Server::read_data(int i)
 {
 	char	buffer[1024];
-	ssize_t bytes_read	= recv(this->_fds[i].fd, buffer, sizeof(buffer), 0);
+	ssize_t	bytes_read = recv(this->_fds[i].fd, buffer, sizeof(buffer), 0);
 
-	if (bytes_read > 0)
-	{
-		/* TODO send the request data to the Request parser*/
+	if (bytes_read > 0) {
+		std::string	request;
+		do {
+			request.append(buffer, bytes_read);
+			if (request.find("\r\n\r\n") != std::string::npos) {
+				break;
+			}
+		} while ((bytes_read = recv(this->_fds[i].fd, buffer, sizeof(buffer), 0)) > 0);
+		handle_request(request);
 	} else if (bytes_read == 0) {
 		close(this->_fds[i].fd);
 		this->_fds[i].fd = -1;
 	} else {
-		if (errno != EWOULDBLOCK)
-		{
+		if (errno != EWOULDBLOCK && errno != EAGAIN) {
 			perror("recv");
 			close(this->_fds[i].fd);
 			this->_fds[i].fd = -1;
@@ -141,7 +149,7 @@ void	Server::read_data(int i)
 	}
 }
 
-void	Server::send_data(int i)
+void	Server::send_response(int i)
 {
 	const char	*response = "Probably need to make a call to some function to get the answer";
 	size_t		response_len = strlen(response);
