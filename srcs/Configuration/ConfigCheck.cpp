@@ -8,6 +8,7 @@ ConfigCheck::ConfigCheck(void)
 ConfigCheck::ConfigCheck(std::string path) : _Path(path)
 {
 	_FileContent = CheckFile(_Path);
+	std::cout << _FileContent << std::endl;
 	return ;
 }
 
