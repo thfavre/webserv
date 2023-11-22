@@ -7,9 +7,16 @@
 #include <unistd.h>
 #include <map>
 #include <poll.h>
+#include "../request/HTTPRequest.hpp"
 
 #define MAX_FDS 200
 #define PORT 8080
+
+#define YELLOW "\033[33m"
+#define CYAN "\033[36m"
+#define RED "\033[31m"
+#define BOLD "\033[1m"
+#define RESET "\033[0m"
 
 class Server
 {

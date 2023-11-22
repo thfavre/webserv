@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "server.hpp"
 
 Server::Server()
 {
@@ -24,10 +24,6 @@ void	Server::setup()
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
 	this->_sockaddr.sin_port = PORT;
-<<<<<<< HEAD
-
-=======
->>>>>>> 65247baf61b88f2eed5cd8a4769f78e3c279be0d
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == -1)
 	{
@@ -53,14 +49,17 @@ void	Server::setup()
 
 void	Server::handle_request(std::string const &request_raw)
 {
-	/*
-	!! Need to merge the Request Parser !!
-	*/
-	// HTTPRequest	request(request_raw);
-	// if (!request.isError())
-	// {
-	// 	//TODO: process the request
-	// }
+	HTTPRequest	request(request_raw);
+
+	if (!request.isError())
+	{
+		std::cout << BOLD << "Request Infos:" << RESET << std::endl;
+		std::cout << YELLOW << request << RESET << std::endl;
+
+		std::cout << BOLD << "Get individual:" << RESET << std::endl;
+		std::cout << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
+		std::cout << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
+	}
 }
 
 void	Server::accept_connection()
@@ -180,14 +179,11 @@ void	Server::send_response(int i)
 	}
 }
 
-<<<<<<< HEAD
 void	Server::end()
 {
 
 }
 
-=======
->>>>>>> 65247baf61b88f2eed5cd8a4769f78e3c279be0d
 /* IDEA TO HANDLE ERRORS IN SETUP
 
 	if (!myServer.setup(8080)) {
