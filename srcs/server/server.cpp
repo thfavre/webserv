@@ -24,6 +24,7 @@ void	Server::setup()
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
 	this->_sockaddr.sin_port = PORT;
+
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == -1)
 	{
@@ -174,6 +175,11 @@ void	Server::send_response(int i)
 			this->_fds[i].events = POLLIN;
 		}
 	}
+}
+
+void	Server::end()
+{
+
 }
 
 /* IDEA TO HANDLE ERRORS IN SETUP

@@ -21,8 +21,8 @@ class Server
 	public:
 		Server();
 		~Server();
-		Server(const Server &src) = delete;
-		Server	&operator=(const Server &src) = delete;
+		Server(const Server &src);
+		Server	&operator=(const Server &src);
 
 		void	setup();
 		void	handle_request(std::string const &request_raw);
@@ -31,6 +31,7 @@ class Server
 		void	send_response(int i);
 		void	run();
 		void	close(int connection);
+		void	end();
 };
 
 #endif

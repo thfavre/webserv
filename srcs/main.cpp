@@ -2,8 +2,9 @@
 #include "request/HTTPRequest.hpp"
 
 void httpRequestTest();
+#include "server/Server.hpp"
 
-int main()
+int main(int ac, char **av)
 {
 	// httpRequestTest();
 }
@@ -38,4 +39,17 @@ void httpRequestTest()
 		std::cout << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
 	}
+	if (ac != 2)
+		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
+	Server	webserv;
+
+	try {
+		webserv.setup(); //TODO: include the configuration file into the setup, then call C.F. parser
+		webserv.run();
+		webserv.end();
+	} catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}
+	return 0;
 }
