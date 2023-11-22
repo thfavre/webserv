@@ -6,7 +6,6 @@ void httpRequestTest();
 
 int main(int ac, char **av)
 {
-	// httpRequestTest();
 	if (ac != 2)
 		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
 	Server	webserv;
