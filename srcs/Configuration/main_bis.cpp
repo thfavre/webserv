@@ -1,6 +1,6 @@
 #include <iostream>
 #include "ConfigCheck.hpp"
-#include "ConfigParse.hpp"
+// #include "ConfigParse.hpp"
 
 int	main(int argc, char *argv[])
 {

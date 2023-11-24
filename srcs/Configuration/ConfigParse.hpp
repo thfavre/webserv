@@ -1,6 +1,10 @@
 #ifndef CONFIGPARSE_HPP
 # define CONFIGPARSE_HPP
 
+#include <iostream>
+#include <vector>
+#include <string>
+
 class ConfigParse
 {
 	public :
@@ -12,6 +16,9 @@ class ConfigParse
 
 	private :
 		ConfigParse(void);
+		void	ParseFile(std::string config);
+		std::vector<std::string>	SplitServers(std::string config);
+
 };
 
 #endif
