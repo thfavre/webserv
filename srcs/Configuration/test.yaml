@@ -1,6 +1,58 @@
-AAAAA
-     BBBBB CCCCC
-	A      DDDDDD
-asdad
-dadas dasda das sad
-dasd adas asd
+  - server:
+      server_name: site1.com
+      port: 8080
+      client_max_body_size: 200k
+      error_pages:
+        - 404: www/errors/404.html
+        - 405: www/errors/405.html
+      routes:
+        - /admin:
+            root: ./www/site1/
+            repertory_listing: true
+        - /:
+            methods: GET POST
+            root: ./www/site1/
+            repertory_listing: false
+            index: index.html
+        - /new_user:
+            root: ./www/site1/new_user/
+            redirection: /404.html
+            cgi: .py /urs/bin/python
+            repertory_listing: true
+        - /google:
+            redirection: http://www.google.com
+            root: ./www/site1/
+
+    - server:
+      server_name: site2.com
+      port: 8081
+      client_max_body_size: 2k
+      error_pages:
+        - 404: ./www/errors/404.html
+      routes:
+        - /:
+            methods: GET
+            root: ./www/site2/
+            repertory_listing: false
+            index: index.html
+        - /admin:
+            methods: GET
+            root: ./www/site2/admin2
+            repertory_listing: true
+
+    - server:
+      server_name: site3.com
+      port: 8082
+      client_max_body_size: 2k
+      error_pages:
+        - 404: ./www/errors/404.html
+      routes:
+        - /:
+            methods: GET
+            root: ./www/site3/
+            repertory_listing: false
+            index: index.html
+        - /vide:
+            methods: GET
+            root: ./www/site3/vide/
+            repertory_listing: true
