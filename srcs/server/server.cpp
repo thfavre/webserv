@@ -81,8 +81,8 @@ void	Server::accept_connection()
 
 void	Server::close(int connection)
 {
-	close(connection);
-	close(this->_listening_socket);
+	::close(connection);
+	::close(this->_listening_socket);
 }
 
 void	Server::run()
