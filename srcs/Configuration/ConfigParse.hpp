@@ -4,6 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include "ConfigCheck.hpp"
+#include "ServerParsed.hpp"
+
 
 class ConfigParse
 {
