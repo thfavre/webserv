@@ -177,6 +177,11 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 	std::string headerValue;
 
 	std::getline(headerLineStream, headerName, ':');
+	if (headerName.length() == 0)
+	{
+		_error_code = 400;
+		throw(HTTPRequest::InvalidRequestException("Invalid header name"));
+	}
 	std::getline(headerLineStream, headerValue);
 	if (headerValue.length() == 0)
 	{
