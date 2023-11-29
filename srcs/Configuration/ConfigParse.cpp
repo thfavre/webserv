@@ -7,7 +7,7 @@ ConfigParse::ConfigParse(void)
 
 ConfigParse::ConfigParse(ConfigCheck config)
 {
-	ParseFile(config.getFileContent());
+	_ServersParsed = ParseFile(config.getFileContent());
 	return ;
 }
 
@@ -28,7 +28,7 @@ ConfigParse	&ConfigParse::operator=(ConfigParse const & rhs)
 	return *this;
 }
 
-void	ConfigParse::ParseFile(std::string config)
+std::vector<t_server>	ConfigParse::ParseFile(std::string config)
 {
 	std::vector<std::string>	ServersUnparsed = SplitServers(config);
 	for (const std::string& server : ServersUnparsed)
@@ -36,8 +36,10 @@ void	ConfigParse::ParseFile(std::string config)
 		std::cout << "This is a server" << std::endl;
 		std::cout << server << std::endl;
 	}
-	std::vector<ServerParsed>	ServerParsed(ServersUnparsed); // Do Next - Est-ce correct?
+	std::vector<t_server>	ServersParsed = ParseServers(ServersUnparsed);
+	return (ServersParsed);
 }
+
 
 std::vector<std::string>	ConfigParse::SplitServers(std::string config)
 {
@@ -61,4 +63,24 @@ std::vector<std::string>	ConfigParse::SplitServers(std::string config)
 		}
 	}
 	return ServersUnparsed;
+}
+
+std::vector<t_server>	ConfigParse::ParseServers(std::vector<std::string> ServersUnparsed)
+{
+	std::vector<t_server>	ServersParsed;
+	size_t	NbServers = ServersUnparsed.size();
+
+	for (int i = 0; i < NbServers; i++)
+	{
+		t_server	data;
+		// Check error?
+		data = ParseInfo(ServersUnparsed[i]);
+		ServersParsed.push_back(data);
+	}
+	return (ServersParsed);
+}
+
+t_server	ConfigParse::ParseInfo(std::string ServersUnparsed)
+{
+
 }
