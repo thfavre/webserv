@@ -1,13 +1,17 @@
 #include <iostream>
 #include "request/HTTPRequest.hpp"
+#include "server/server.hpp"
 
 void httpRequestTest();
-#include "server/Server.hpp"
 
 int main(int ac, char **av)
 {
+	(void) av;
 	if (ac != 2)
+	{
 		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
+		return 1;
+	}
 	Server	webserv;
 
 	try {
