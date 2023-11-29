@@ -32,7 +32,7 @@ const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPReq
 
 HTTPRequest::HTTPRequest(const std::string &requestData)
 {
-	_error_code = 0;
+	_statusCode = 0;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	_parseRequest(requestData);
 }
@@ -45,7 +45,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 		std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
 		if (requestParts.size() != 2)
 		{
-			_error_code = 400;
+			_statusCode = 400;
 			throw HTTPRequest::InvalidRequestException("Invalid request format");
 		}
 
@@ -55,7 +55,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 		std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
 		if (requestHeaderLines.size() == 0)
 		{
-			_error_code = 400;
+			_statusCode = 400;
 			throw HTTPRequest::InvalidRequestException("Missing request line");
 		}
 
@@ -71,9 +71,9 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	catch (InvalidRequestException &e)
 	{
 		// Handle invalid request error
-		if (_error_code == 0)
-			_error_code = 400;
-		std::cerr << "Error " << _error_code << ": " << e.what() << std::endl;
+		if (_statusCode == 0)
+			_statusCode = 400;
+		std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
 	}
 }
 
@@ -97,7 +97,7 @@ void HTTPRequest::_parseMethod(const std::string &method)
 {
 	if (method.empty() || _acceptedMethods.find(method) == _acceptedMethods.end())
 	{
-		_error_code = 501;
+		_statusCode = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
 	}
 	_requestMethod = method;
@@ -129,22 +129,22 @@ void HTTPRequest::_parsePath(const std::string &path)
 {
 	if (path.empty())
 	{
-		_error_code = 400;
+		_statusCode = 400;
 		throw(HTTPRequest::InvalidRequestException("No path specified"));
 	}
 	if (!_areAllPathCharactersValid(path))
 	{
-		_error_code = 400;
+		_statusCode = 400;
 		throw HTTPRequest::InvalidRequestException("Invalid path '" + path + "'");
 	}
 	if (!_isSafePath(path))
 	{
-		_error_code = 403;
+		_statusCode = 403;
 		throw HTTPRequest::InvalidRequestException("Invalid path '" + path + "'");
 	}
 	if (!_isPathLengthValid(path, MAX_PATH_LENGTH))
 	{
-		_error_code = 414;
+		_statusCode = 414;
 		throw HTTPRequest::InvalidRequestException("Path '" + path + "' too long");
 	}
 	_requestPath = path;
@@ -154,7 +154,7 @@ void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersi
 {
 	if (httpProtocolVersion.empty() || _acceptedHTTPProtocolVersions.find(httpProtocolVersion) == _acceptedHTTPProtocolVersions.end())
 	{
-		_error_code = 505;
+		_statusCode = 505;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP protocol version '" + httpProtocolVersion + "'"));
 	}
 	_httpProtocolVersion = httpProtocolVersion;
@@ -179,18 +179,18 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 	std::getline(headerLineStream, headerName, ':');
 	if (headerName.length() == 0)
 	{
-		_error_code = 400;
+		_statusCode = 400;
 		throw(HTTPRequest::InvalidRequestException("Invalid header name"));
 	}
 	std::getline(headerLineStream, headerValue);
-	if (headerValue.length() == 0)
-	{
-		_error_code = 400;
-		throw(HTTPRequest::InvalidRequestException("Invalid header value for header '" + headerName + "'"));
-	}
-
 	if (headerValue[0] == ' ')
 		headerValue.erase(0, 1);
+	if (headerValue.length() == 0)
+	{
+		_statusCode = 400;
+		throw(HTTPRequest::InvalidRequestException("Invalid header value for header '" + headerName + "'"));
+	}
+	// TODO put to lower case ? (because case insensitive)
 	_headers[headerName] = headerValue;
 }
 
@@ -201,7 +201,7 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 
 bool HTTPRequest::isError() const
 {
-	return (_error_code != 0);
+	return (_statusCode != 0);
 }
 
 /* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)
@@ -239,9 +239,9 @@ const std::string &HTTPRequest::getBody() const
 	return (_body);
 }
 
-const int &HTTPRequest::getErrorCode() const
+const int &HTTPRequest::getStatusCode() const
 {
-	return (_error_code);
+	return (_statusCode);
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
