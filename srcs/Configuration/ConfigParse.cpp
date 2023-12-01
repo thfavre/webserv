@@ -31,11 +31,11 @@ ConfigParse	&ConfigParse::operator=(ConfigParse const & rhs)
 std::vector<t_server>	ConfigParse::ParseFile(std::string config)
 {
 	std::vector<std::string>	ServersUnparsed = SplitServers(config);
-	for (const std::string& server : ServersUnparsed)
-	{
-		std::cout << "This is a server" << std::endl;
-		std::cout << server << std::endl;
-	}
+	// for (const std::string& server : ServersUnparsed)
+	// {
+	// 	std::cout << "This is a server" << std::endl;
+	// 	std::cout << server;
+	// }
 	std::vector<t_server>	ServersParsed = ParseServers(ServersUnparsed);
 	return (ServersParsed);
 }
@@ -44,7 +44,7 @@ std::vector<t_server>	ConfigParse::ParseFile(std::string config)
 std::vector<std::string>	ConfigParse::SplitServers(std::string config)
 {
 	std::vector<std::string> ServersUnparsed;
-	std::string	limit = "- server:";
+	std::string	limit = "- server:\n";
 	size_t	pos;
 	size_t	NextPos;
 	size_t	limitSize = limit.size();
@@ -62,6 +62,8 @@ std::vector<std::string>	ConfigParse::SplitServers(std::string config)
 			break;
 		}
 	}
+	if (pos == std::string::npos)
+		throw std::invalid_argument("Config file invalid");
 	return ServersUnparsed;
 }
 
@@ -72,15 +74,97 @@ std::vector<t_server>	ConfigParse::ParseServers(std::vector<std::string> Servers
 
 	for (int i = 0; i < NbServers; i++)
 	{
+		CheckInfosServer(ServersUnparsed[i]);
 		t_server	data;
-		// Check error?
-		data = ParseInfo(ServersUnparsed[i]);
+		data = ParseInfo(ServersUnparsed[i], data);
 		ServersParsed.push_back(data);
 	}
 	return (ServersParsed);
 }
 
-t_server	ConfigParse::ParseInfo(std::string ServersUnparsed)
+void		ConfigParse::CheckInfosServer(std::string server)
 {
+	size_t	pos0 = server.find("server_name:");
+	size_t	pos1 = server.find("port:");
+	size_t	pos2 = server.find("client_max_body_size:");
+	size_t	pos3 = server.find("error_pages:");
+	size_t	pos4 = server.find("routes:");
+	if (pos0 != std::string::npos && pos1 != std::string::npos &&
+		pos2 != std::string::npos && pos3 != std::string::npos &&
+		pos4 != std::string::npos && pos0 < pos1 && pos1 < pos2 &&
+		pos2 < pos3 && pos3 < pos4)
+		return ;
+	else
+		throw std::invalid_argument("Config file invalid");
+	return;
+}
 
+t_server	ConfigParse::ParseInfo(std::string server, t_server &data)
+{
+	std::string	NewStr = server;
+
+	NewStr = ParseServerName(NewStr, data);
+	NewStr = ParsePort(NewStr, data);
+	NewStr = ParseBodySize(NewStr, data);
+	// std::cout << "THIS IS A SERVER" << std::endl;
+	// std::cout << data.server_name << std::endl;
+	// std::cout << data.port << std::endl;
+	// std::cout << NewStr << std::endl;
+	return (data);
+}
+
+std::string		ConfigParse::ParseServerName(std::string NewStr, t_server &data)
+{
+	size_t	start;
+	size_t	end;
+	std::string	limit = "server_name: ";
+	size_t	limitSize = limit.size();
+
+	if ((start = NewStr.find(limit)) != std::string::npos &&
+		((end = NewStr.find("\n")) != std::string::npos))
+	{
+		data.server_name = NewStr.substr(start + limitSize, end - (start + limitSize));
+		NewStr = NewStr.erase(0, end + 1);
+	}
+	else
+		throw std::invalid_argument("Server_name is invalid during parsing");
+	return (NewStr);
+}
+
+std::string		ConfigParse::ParsePort(std::string NewStr, t_server &data)
+{
+	size_t	start;
+	size_t	end;
+	std::string	limit = "port: ";
+	std::string	tmp;
+	size_t	limitSize = limit.size();
+
+	if ((start = NewStr.find(limit)) != std::string::npos &&
+		((end = NewStr.find("\n")) != std::string::npos))
+	{
+		tmp = NewStr.substr(start + limitSize, end - (start + limitSize));
+		if (areAllDigits(tmp))
+		{
+			data.port = std::atoi(tmp.c_str());
+			NewStr = NewStr.erase(0, end + 1);
+		}
+		else
+			throw std::invalid_argument("Port is invalid during parsing");
+	}
+	else
+		throw std::invalid_argument("Port is invalid during parsing");
+	return (NewStr);
+}
+
+std::string		ConfigParse::ParseBodySize(std::string NewStr, t_server &data)
+{
+	// to do next
+}
+
+bool		ConfigParse::areAllDigits(const std::string& str)
+{
+	return std::all_of(str.begin(), str.end(), [](unsigned char c)
+	{
+		return std::isdigit(c) != 0;
+	});
 }
