@@ -64,6 +64,9 @@ private:
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
 	void _parseBody(const std::string &bodyLines);
+
+	// execute
+	void _executeMethod();
 };
 
 #endif // HTTPREQUEST_HPP

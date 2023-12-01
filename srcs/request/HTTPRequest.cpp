@@ -12,9 +12,9 @@ const std::set<std::string> HTTPRequest::_initAcceptedMethods()
 	std::set<std::string> methods;
 	methods.insert("GET");
 	methods.insert("POST");
-	methods.insert("PUT");
+	// methods.insert("PUT");
 	methods.insert("DELETE");
-	methods.insert("HEAD");
+	// methods.insert("HEAD");
 	return (methods);
 }
 
@@ -114,6 +114,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 			_statusCode = 400;
 		std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
 	}
+
 }
 
 void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO should return a bool instead of throwing an exception ?
@@ -238,9 +239,32 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	_body = bodyLines;
 }
 
+void HTTPRequest::_executeMethod()
+{
+	if (_statusCode != 0)
+	{
+		// show error page
+		return;
+	}
+
+	if (_requestMethod == "GET")
+	{
+		// show resource
+
+	}
+	else if (_requestMethod == "POST")
+	{
+		// create resource
+	}
+	else if (_requestMethod == "DELETE")
+	{
+		// delete resource
+	}
+}
+
 bool HTTPRequest::isError() const
 {
-	return (_statusCode != 0);
+	return (_statusCode < 200 || _statusCode >= 300);
 }
 
 /* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)

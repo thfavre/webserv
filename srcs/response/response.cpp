@@ -3,25 +3,37 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+std::map<int, std::string> _statusCodes = {
+	{200, "OK"},
+	{201, "Created"},
+	{202, "Accepted"},
+	{204, "No Content"},
+	{301, "Moved Permanently"},
+	{302, "Found"},
+	{304, "Not Modified"},
+	{400, "Bad Request"},
+	{401, "Unauthorized"},
+	{403, "Forbidden"},
+	{404, "Not Found"},
+	{405, "Method Not Allowed"},
+	{413, "Payload Too Large"},
+	{500, "Internal Server Error"},
+	{501, "Not Implemented"},
+	{505, "HTTP Version Not Supported"}
+};
+
+std::string getStatusCodeMessage(int statusCode)
+{
+	if (_statusCodes.find(statusCode) == _statusCodes.end())
+		return ("Unknown Status Code");
+	return (_statusCodes[statusCode]);
+}
 
 Response::Response(const HTTPRequest &request, int socketFd)
 {
 	_httpProtocolVersion = request.getHttpProtocolVersion();
 
 	_statusCode = request.getStatusCode();
-	if (_statusCode == 200)
-		_statusMessage = "OK";
-	else if (_statusCode == 404)
-		_statusMessage = "Not Found";
-	else if (_statusCode == 500)
-		_statusMessage = "Internal Server Error";
-	else
-		_statusMessage = "Unknown Status Code";
-
-	// _statusCode = "200";
-	// _statusMessage = "OK";
-	// _headers["Content-Type"] = "text/html";
-
 	_formatResponse(request);
 	_sendResponse(socketFd);
 }
@@ -31,28 +43,26 @@ void Response::_formatResponse(const HTTPRequest &request)
 {
 	// body
 	std::string body;
-	// Hello World!
-	// body = "<html><body><h1>Hello World!</h1></body></html>";
 	std::string _root = "./"; // TODO come from config parser
 	_root += request.getPath();
-	std::ifstream file;//(_root.c_str(),  std::ios::in); // ? TODO check if file exists?
+	std::ifstream file;
 	file.open(_root.c_str(),  std::ios::in);
 	if (!file.is_open())
 	{
 		printf("Error opening file\n");
-		_statusCode = 500;
+		_statusCode = 404;
 		_statusMessage = "Internal Server Error";
 		// _formatResponse();
 		return ;
 	}
 	std::string line;
-	while (std::getline(file, line)) // use the >> operator instead?
+	while (std::getline(file, line))
 		body += line;
 	file.close();
 
 	// headers
 	std::string headers;
-	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + _statusMessage + "\r\n";
+	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
 	headers += "Content-Type: text/html\r\n";
 	if (body.length() > 0)
 		headers += "Content-Length: " + std::to_string(body.length()) + "\r\n";
@@ -66,14 +76,18 @@ void Response::_formatResponse(const HTTPRequest &request)
 
 	_response = headers + "\r\n" + body;
 
-
-
 }
+
+
 
 void Response::_sendResponse(int socketFd)
 {
 	// write(socketFd, _response.c_str(), _response.length());
-	send(socketFd, _response.c_str(), _response.length(), MSG_DONTWAIT);
+	if (send(socketFd, _response.c_str(), _response.length(), MSG_DONTWAIT) != -1)
+		printf("Response sent\n"); // TODO don't use printf
+	else
+		printf("Error sending response\n");
+
 }
 
 /* ****** Getters ****** */
