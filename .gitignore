@@ -31,10 +31,5 @@
 *.out
 *.app
 
-<<<<<<< HEAD
 # vscode
 .vscode/settings.json
-=======
-# Vscode
-.vscode
->>>>>>> f214566d11e2c6a54df7b9250117600786bb824c
