@@ -12,7 +12,6 @@ int	main(int argc, char *argv[])
 	try
 	{
 		ConfigCheck	Config(argv[1]);
-		std::cout << Config.getFileContent() << std::endl;
 		ConfigParse Parse(Config);
 	}
 	catch (std::exception& e)
