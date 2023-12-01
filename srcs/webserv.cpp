@@ -1,6 +1,7 @@
 #include <iostream>
 #include "request/HTTPRequest.hpp"
 #include "server/server.hpp"
+#include "server/ServerManager.hpp"
 
 void httpRequestTest();
 
@@ -12,12 +13,34 @@ int main(int ac, char **av)
 		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
 		return 1;
 	}
-	Server	webserv;
+	std::vector<t_server> mockConfigs;
 
+	// Mock configuration for site1.com
+	t_server site1Config;
+	site1Config.server_name = "site1.com";
+	site1Config.port = 8080;
+	site1Config.client_max_body_size = "200k";
+	site1Config.error_pages[404] = "www/errors/404.html";
+	site1Config.error_pages[405] = "www/errors/405.html";
+	site1Config.routes["/admin"]["root"] = "./www/site1/";
+	site1Config.routes["/admin"]["repertory_listing"] = "true";
+
+	mockConfigs.push_back(site1Config);
+
+	// Mock configuration for site2.com
+	t_server site2Config;
+	site2Config.server_name = "site2.com";
+	site2Config.port = 8081;
+	site2Config.client_max_body_size = "2k";
+	site2Config.error_pages[404] = "./www/errors/404.html";
+	site2Config.routes["/"]["root"] = "./www/site2/";
+	site2Config.routes["/"]["repertory_listing"] = "false";
+
+	mockConfigs.push_back(site2Config);
+
+	ServerManager	serverManager(mockConfigs);
 	try {
-		webserv.setup(); //TODO: include the configuration file into the setup, then call C.F. parser
-		webserv.run();
-		webserv.end();
+		serverManager.launchServers();
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		return 1;

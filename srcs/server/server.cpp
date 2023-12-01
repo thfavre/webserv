@@ -19,11 +19,23 @@ Server::~Server()
 	}
 }
 
-void	Server::setup()
+// Server::Server (const Server &src)
+// {
+// 	// if (*this != src)
+// 	// 	this = src;
+// 	// return *this;
+// }
+
+// Server	&Server::operator=(const Server &src)
+// {
+
+// }
+
+void	Server::setup(const t_server &config)
 {
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
-	this->_sockaddr.sin_port = PORT;
+	this->_sockaddr.sin_port = htons(config.port);		//TODO: check if port is <= 0 || > 65535
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == -1)
 	{
@@ -33,7 +45,7 @@ void	Server::setup()
 
 	if (bind(this->_listening_socket, (struct sockaddr*)&this->_sockaddr, sizeof(sockaddr)) < 0)
 	{
-		std::cout << "Failed to bind to port " << PORT << ". errno: " << errno << std::endl;
+		std::cout << "Failed to bind to port " << config.port << ". errno: " << errno << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -87,7 +99,7 @@ void	Server::close(int connection)
 
 void	Server::run()
 {
-	this->_fds[0].fd = this->_listening_socket; //TODO: define listening_socket
+	this->_fds[0].fd = this->_listening_socket;
 	this->_fds[0].events = POLLIN;
 
 	for (int i = 1; i < MAX_FDS; i++)
@@ -182,6 +194,11 @@ void	Server::send_response(int i)
 void	Server::end()
 {
 
+}
+
+void	Server::setConfigs(std::vector<t_server> &configs)
+{
+	_configs = configs;
 }
 
 /* IDEA TO HANDLE ERRORS IN SETUP
