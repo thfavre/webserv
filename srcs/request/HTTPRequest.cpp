@@ -42,7 +42,46 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	try
 	{
 		// Parse the request components
+		// printf("***Request data: ");
+		// for (const char *p = requestData.c_str(); *p != '\0'; ++p)
+		// {
+		// 	int c = (unsigned char)*p;
+
+		// 	switch (c)
+		// 	{
+		// 	case '\\':
+		// 		printf("\\\\");
+		// 		break;
+		// 	case '\n':
+		// 		printf("\\n");
+		// 		break;
+		// 	case '\r':
+		// 		printf("\\r");
+		// 		break;
+		// 	case '\t':
+		// 		printf("\\t");
+		// 		break;
+
+		// 		// TODO: Add other C character escapes here.  See:
+		// 		// <https://en.wikipedia.org/wiki/Escape_sequences_in_C#Table_of_escape_sequences>
+
+		// 	default:
+		// 		if (isprint(c))
+		// 		{
+		// 			putchar(c);
+		// 		}
+		// 		else
+		// 		{
+		// 			printf("\\x%X", c);
+		// 		}
+		// 		break;
+		// 	}
+		// }
+		// printf("***END\n\n");
+
 		std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
+		if (requestParts.size() == 1 && requestData.find("\r\n\r\n") != std::string::npos)
+			requestParts.push_back("");
 		if (requestParts.size() != 2)
 		{
 			_statusCode = 400;

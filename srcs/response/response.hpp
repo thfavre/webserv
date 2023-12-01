@@ -4,12 +4,13 @@
 
 # include <string>
 # include <map>
-# include "HTTPRequest.hpp"
+# include "../request/HTTPRequest.hpp"
 
 class Response
 {
 	public:
-		Response(const HTTPRequest &request);
+		Response(const HTTPRequest &request, int socketFd);
+		const std::string getResponse() const;
 
 	private:
 		std::string _httpProtocolVersion;
@@ -19,7 +20,8 @@ class Response
 		// std::string _body;
 		std::string _response;
 
-		void formatResponse();
+		void _formatResponse(const HTTPRequest &request);
+		void _sendResponse(int socketFd);
 };
 
 

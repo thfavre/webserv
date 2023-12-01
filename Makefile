@@ -11,7 +11,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 # Source files
-SOURCES = srcs/main.cpp srcs/request/HTTPRequest.cpp srcs/request/split.cpp
+SOURCES = srcs/main.cpp srcs/request/HTTPRequest.cpp srcs/request/split.cpp srcs/response/Response.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)

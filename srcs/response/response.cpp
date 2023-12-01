@@ -1,7 +1,10 @@
-#include "response.hpp"
+#include "Response.hpp"
 #include <fstream>
+#include <unistd.h>
+#include <sys/socket.h>
 
-Response::Response(const HTTPRequest &request)
+
+Response::Response(const HTTPRequest &request, int socketFd)
 {
 	_httpProtocolVersion = request.getHttpProtocolVersion();
 
@@ -19,22 +22,33 @@ Response::Response(const HTTPRequest &request)
 	// _statusMessage = "OK";
 	// _headers["Content-Type"] = "text/html";
 
-	formatResponse();
+	_formatResponse(request);
+	_sendResponse(socketFd);
 }
 
 
-void Response::formatResponse()
+void Response::_formatResponse(const HTTPRequest &request)
 {
 	// body
 	std::string body;
 	// Hello World!
 	// body = "<html><body><h1>Hello World!</h1></body></html>";
-	std::string _root = "./test.html"; // TODO come from config parser
-	std::ifstream file(_root.c_str()); // ? TODO check if file exists?
+	std::string _root = "./"; // TODO come from config parser
+	_root += request.getPath();
+	std::ifstream file;//(_root.c_str(),  std::ios::in); // ? TODO check if file exists?
+	file.open(_root.c_str(),  std::ios::in);
+	if (!file.is_open())
+	{
+		printf("Error opening file\n");
+		_statusCode = 500;
+		_statusMessage = "Internal Server Error";
+		// _formatResponse();
+		return ;
+	}
 	std::string line;
-	while (std::getline(file, line))
+	while (std::getline(file, line)) // use the >> operator instead?
 		body += line;
-
+	file.close();
 
 	// headers
 	std::string headers;
@@ -54,4 +68,16 @@ void Response::formatResponse()
 
 
 
+}
+
+void Response::_sendResponse(int socketFd)
+{
+	// write(socketFd, _response.c_str(), _response.length());
+	send(socketFd, _response.c_str(), _response.length(), MSG_DONTWAIT);
+}
+
+/* ****** Getters ****** */
+const std::string Response::getResponse() const
+{
+	return (_response);
 }
