@@ -124,9 +124,9 @@ void	Server::run()
 				if (this->_fds[i].fd != -1)
 				{
 					if (this->_fds[i].revents & POLLIN)
-						read_data(i);
+						read_data(this->_fds[i]);
 					if (this->_fds[i].revents & POLLOUT)
-						send_response(i);
+						send_response(this->_fds[i]);
 					if (this->_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 					{
 						close(this->_fds[i].fd);
@@ -138,10 +138,10 @@ void	Server::run()
 	}
 }
 
-void	Server::read_data(int i)
+void	Server::read_data(pollfd fd)
 {
 	char	buffer[1024];
-	ssize_t	bytes_read = recv(this->_fds[i].fd, buffer, sizeof(buffer), 0);
+	ssize_t	bytes_read = recv(fd.fd, buffer, sizeof(buffer), 0);
 
 	if (bytes_read > 0) {
 		std::string	request;
@@ -150,28 +150,28 @@ void	Server::read_data(int i)
 			if (request.find("\r\n\r\n") != std::string::npos) {
 				break;
 			}
-		} while ((bytes_read = recv(this->_fds[i].fd, buffer, sizeof(buffer), 0)) > 0);
+		} while ((bytes_read = recv(fd.fd, buffer, sizeof(buffer), 0)) > 0);
 		handle_request(request);
 	} else if (bytes_read == 0) {
-		close(this->_fds[i].fd);
-		this->_fds[i].fd = -1;
+		close(fd.fd);
+		fd.fd = -1;
 	} else {
 		if (errno != EWOULDBLOCK && errno != EAGAIN) {
 			perror("recv");
-			close(this->_fds[i].fd);
-			this->_fds[i].fd = -1;
+			close(fd.fd);
+			fd.fd = -1;
 		}
 	}
 }
 
-void	Server::send_response(int i)
+void	Server::send_response(pollfd fd)
 {
 	const char	*response = "Probably need to make a call to some function to get the answer";
 	size_t		response_len = strlen(response);
 	size_t		response_sent = 0;
 	/* All of the above variables might need to be defined elsewhere */
 
-	ssize_t	bytes_sent = send(this->_fds[i].fd, response + response_sent, response_len - response_sent, 0);
+	ssize_t	bytes_sent = send(fd.fd, response + response_sent, response_len - response_sent, 0);
 
 	if (bytes_sent == -1)
 	{
@@ -186,7 +186,7 @@ void	Server::send_response(int i)
 		if (response_sent == response_len)
 		{
 			response_sent = 0;
-			this->_fds[i].events = POLLIN;
+			fd.events = POLLIN;
 		}
 	}
 }

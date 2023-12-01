@@ -43,8 +43,8 @@ class Server
 		void	setup(const t_server &config);
 		void	handle_request(std::string const &request_raw);
 		void	accept_connection();
-		void	read_data(int i);
-		void	send_response(int i);
+		void	read_data(pollfd fd);
+		void	send_response(pollfd fd);
 		void	run();
 		void	close(int connection);
 		void	end();
