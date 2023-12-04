@@ -31,11 +31,6 @@ ConfigParse	&ConfigParse::operator=(ConfigParse const & rhs)
 std::vector<t_server>	ConfigParse::ParseFile(std::string config)
 {
 	std::vector<std::string>	ServersUnparsed = SplitServers(config);
-	// for (const std::string& server : ServersUnparsed)
-	// {
-	// 	std::cout << "This is a server" << std::endl;
-	// 	std::cout << server;
-	// }
 	std::vector<t_server>	ServersParsed = ParseServers(ServersUnparsed);
 	return (ServersParsed);
 }
@@ -106,10 +101,12 @@ t_server	ConfigParse::ParseInfo(std::string server, t_server &data)
 	NewStr = ParseServerName(NewStr, data);
 	NewStr = ParsePort(NewStr, data);
 	NewStr = ParseBodySize(NewStr, data);
-	// std::cout << "THIS IS A SERVER" << std::endl;
-	// std::cout << data.server_name << std::endl;
-	// std::cout << data.port << std::endl;
-	// std::cout << NewStr << std::endl;
+	NewStr = ParseErrorPages(NewStr, data);
+	std::cout << "THIS IS A SERVER" << std::endl;
+	std::cout << data.server_name << std::endl;
+	std::cout << data.port << std::endl;
+	std::cout << data.client_max_body_size << std::endl;
+	std::cout << NewStr << std::endl;
 	return (data);
 }
 
@@ -158,10 +155,40 @@ std::string		ConfigParse::ParsePort(std::string NewStr, t_server &data)
 
 std::string		ConfigParse::ParseBodySize(std::string NewStr, t_server &data)
 {
-	// to do next
+	size_t	start;
+	size_t	end;
+	std::string	limit = "client_max_body_size: ";
+	std::string	tmp;
+	size_t	limitSize = limit.size();
+
+	if ((start = NewStr.find(limit)) != std::string::npos &&
+		((end = NewStr.find("\n")) != std::string::npos))
+	{
+		tmp = NewStr.substr(start + limitSize, end - (start + limitSize));
+		data.client_max_body_size = std::atoi(tmp.c_str());
+		if (!areAllDigits(tmp))
+		{
+			if (((tmp.find("k") != std::string::npos || tmp.find("K") != std::string::npos)) && data.client_max_body_size < 100000)
+				data.client_max_body_size *= 1024;
+			else if (((tmp.find("m") != std::string::npos || tmp.find("M") != std::string::npos)) && data.client_max_body_size < 100)
+				data.client_max_body_size *= 1024 * 1024;
+			else
+				throw std::invalid_argument("Client_max_body_size is invalid during parsing");
+		}
+		NewStr = NewStr.erase(0, end + 1);
+	}
+	else
+		throw std::invalid_argument("Client_max_body_size is invalid during parsing");
+	return (NewStr);
 }
 
-bool		ConfigParse::areAllDigits(const std::string& str)
+std::string		ConfigParse::ParseErrorPages(std::string NewStr, t_server &data)
+{
+
+	return (NewStr);
+}
+
+bool		ConfigParse::areAllDigits(const std::string& str) // Norme 98 pas respectée
 {
 	return std::all_of(str.begin(), str.end(), [](unsigned char c)
 	{

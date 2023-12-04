@@ -26,7 +26,7 @@
     - server:
       server_name: site2.com
       port: 8081
-      client_max_body_size: 2k
+      client_max_body_size: 2m
       error_pages:
         - 404: ./www/errors/404.html
       routes:

@@ -14,7 +14,7 @@ typedef struct s_server
 {
 	std::string	server_name;
 	int	port;
-	std::string	client_max_body_size; // Convertir?
+	size_t	client_max_body_size; // Convertir?
 	std::map<int, std::string> error_pages;
 	std::map<std::string, std::map<std::string, std::string> > routes;
 }	t_server;
@@ -38,6 +38,7 @@ class ConfigParse
 		std::string					ParseServerName(std::string NewStr, t_server &data);
 		std::string					ParsePort(std::string NewStr, t_server &data);
 		std::string					ParseBodySize(std::string NewStr, t_server &data);
+		std::string					ParseErrorPages(std::string NewStr, t_server &data);
 		bool						areAllDigits(const std::string& str);
 		std::vector<t_server>		_ServersParsed;
 
