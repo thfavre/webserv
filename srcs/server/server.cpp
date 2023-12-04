@@ -118,7 +118,6 @@ void	Server::run()
 		{
 			if (this->_fds[0].revents & POLLIN)
 				accept_connection();
-
 			for (int i = 1; i < MAX_FDS; i++)
 			{
 				if (this->_fds[i].fd != -1)
