@@ -63,13 +63,13 @@ void webservTest()
 		HTTPRequest request(request_buffer);
 		if (request.isError())
 		{
-			std::cout << "Error parsing request" << std::endl;
+			std::cout << "Error parsing request, errorCode : " << request.getStatusCode() << std::endl;
 			continue;
 		}
-		const char *page_name = request.getPath().c_str();
+		// const char *page_name = request.getPath().c_str();
 
-		if (strstr(page_name, ".html") != NULL)
-		{
+		// if (strstr(page_name, ".html") != NULL)
+		// {
 			Response response(request, new_socket);
 
 			// std::string responseString = response.getResponse();
@@ -77,7 +77,7 @@ void webservTest()
 
 			// write(new_socket, respond, strlen(respond));
 
-		}
+		// }
 		printf("done\n");
 		// printf("------------------Hello message sent-------------------\n");
 

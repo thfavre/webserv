@@ -21,6 +21,7 @@ class Response
 		std::string _response;
 
 		void _formatResponse(const HTTPRequest &request);
+		std::string _getContentType(const std::string &path);
 		void _sendResponse(int socketFd);
 };
 

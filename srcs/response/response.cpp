@@ -3,27 +3,45 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-std::map<int, std::string> _statusCodes = {
-	{200, "OK"},
-	{201, "Created"},
-	{202, "Accepted"},
-	{204, "No Content"},
-	{301, "Moved Permanently"},
-	{302, "Found"},
-	{304, "Not Modified"},
-	{400, "Bad Request"},
-	{401, "Unauthorized"},
-	{403, "Forbidden"},
-	{404, "Not Found"},
-	{405, "Method Not Allowed"},
-	{413, "Payload Too Large"},
-	{500, "Internal Server Error"},
-	{501, "Not Implemented"},
-	{505, "HTTP Version Not Supported"}
-};
 
-std::string getStatusCodeMessage(int statusCode)
+// std::map<int, std::string> _statusCodes = {
+// 	{200, "OK"},
+// 	{201, "Created"},
+// 	{202, "Accepted"},
+// 	{204, "No Content"},
+// 	{301, "Moved Permanently"},
+// 	{302, "Found"},
+// 	{304, "Not Modified"},
+// 	{400, "Bad Request"},
+// 	{401, "Unauthorized"},
+// 	{403, "Forbidden"},
+// 	{404, "Not Found"},
+// 	{405, "Method Not Allowed"},
+// 	{413, "Payload Too Large"},
+// 	{500, "Internal Server Error"},
+// 	{501, "Not Implemented"},
+// 	{505, "HTTP Version Not Supported"}
+// };
+
+std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to do this (see with @fab in error class)
 {
+	std::map<int, std::string> _statusCodes;
+	_statusCodes[200] = "OK";
+	_statusCodes[201] = "Created";
+	_statusCodes[202] = "Accepted";
+	_statusCodes[204] = "No Content";
+	_statusCodes[301] = "Moved Permanently";
+	_statusCodes[302] = "Found";
+	_statusCodes[304] = "Not Modified";
+	_statusCodes[400] = "Bad Request";
+	_statusCodes[401] = "Unauthorized";
+	_statusCodes[403] = "Forbidden";
+	_statusCodes[404] = "Not Found";
+	_statusCodes[405] = "Method Not Allowed";
+	_statusCodes[413] = "Payload Too Large";
+	_statusCodes[500] = "Internal Server Error";
+	_statusCodes[501] = "Not Implemented";
+	_statusCodes[505] = "HTTP Version Not Supported";
 	if (_statusCodes.find(statusCode) == _statusCodes.end())
 		return ("Unknown Status Code");
 	return (_statusCodes[statusCode]);
@@ -78,6 +96,15 @@ void Response::_formatResponse(const HTTPRequest &request)
 
 }
 
+std::string Response::_getContentType(const std::string &path)
+{
+	std::string::size_type dotIndex = path.find_last_of('.');
+	if (dotIndex == std::string::npos)
+		return ("application/octet-stream"); // TODO check if this is the right default value
+	std::string extension = path.substr(dotIndex + 1);
+	// ? TODO check if this is the right way to do this
+	return ("text/html");
+}
 
 
 void Response::_sendResponse(int socketFd)
