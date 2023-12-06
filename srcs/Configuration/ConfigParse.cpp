@@ -184,7 +184,39 @@ std::string		ConfigParse::ParseBodySize(std::string NewStr, t_server &data)
 
 std::string		ConfigParse::ParseErrorPages(std::string NewStr, t_server &data)
 {
-
+	size_t	start;
+	size_t	end;
+	size_t	delimit;
+	size_t	endLine;
+	std::string	limitStart = "- ";
+	std::string	limitEnd = "routes:\n";
+	std::string	tmp;
+	int		key;
+	std::string	value;
+	size_t	limitStartSize = limitStart.size();
+	if (NewStr.find("error_pages:\n") == std::string::npos)
+		throw std::invalid_argument("Error_pages is invalid during parsing1");
+	while ((start = NewStr.find(limitStart)) != std::string::npos && (end = NewStr.find(limitEnd)) != std::string::npos && start < end)
+	{
+		if ((delimit = NewStr.find(":")) != std::string::npos)
+		{
+			tmp = NewStr.substr(start + limitStartSize + 1, delimit);
+			std::cout << tmp << std::endl;
+			if (!areAllDigits(tmp))
+				throw std::invalid_argument("Error_pages is invalid during parsing2");
+			key = std::atoi(tmp.c_str());
+		}
+		else
+			throw std::invalid_argument("Error_pages is invalid during parsing3");
+		if ((endLine = NewStr.find("\n")) != std::string::npos)
+			value = NewStr.substr(delimit + 1, endLine);
+		else
+			throw std::invalid_argument("Error_pages is invalid during parsing4");
+		data.error_pages.insert(std::make_pair(key, value));
+		NewStr = NewStr.erase(0, endLine);
+	}
+	if (start == std::string::npos || end == std::string::npos)
+		throw std::invalid_argument("Error_pages is invalid during parsing5");
 	return (NewStr);
 }
 
