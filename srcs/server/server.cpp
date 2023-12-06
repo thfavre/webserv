@@ -163,32 +163,97 @@ void	Server::read_data(pollfd fd)
 	}
 }
 
-void	Server::send_response(pollfd fd)
-{
-	const char	*response = "Probably need to make a call to some function to get the answer";
-	size_t		response_len = strlen(response);
-	size_t		response_sent = 0;
-	/* All of the above variables might need to be defined elsewhere */
+// void	Server::send_response(pollfd fd)
+// {
+// 	std::string httpResponse =
+// 		"HTTP/1.1 200 OK\r\n"
+// 		"Content-Type: text/html; charset=UTF-8\r\n"
+// 		"\r\n"
+// 		"<html>\r\n"
+// 		"<head>\r\n"
+// 		"<title>Test Page</title>\r\n"
+// 		"</head>\r\n"
+// 		"<body>\r\n"
+// 		"<h1>Hello, World!</h1>\r\n"
+// 		"<p>This is a hardcoded response from your server.</p>\r\n"
+// 		"</body>\r\n"
+// 		"</html>\r\n";
+// 	/* All of the above variables might need to be defined elsewhere */
 
-	ssize_t	bytes_sent = send(fd.fd, response + response_sent, response_len - response_sent, 0);
+// 	ssize_t	bytes_sent = send(fd.fd, httpResponse.c_str(), httpResponse.size(), 0);
+
+// 	if (bytes_sent == -1)
+// 	{
+// 		if (errno != -1)
+// 		{
+// 			perror("send");
+// 			/* TODO: handle the error (close socket or else...) */
+// 		}
+// 	}
+// 	// } else {
+// 	// 	response_sent += bytes_sent;
+
+// 	// 	if (response_sent == response_len)
+// 	// 	{
+// 	// 		response_sent = 0;
+// 	// 		fd.events = POLLIN;
+// 	// 	}
+// 	// }
+// }
+
+void Server::send_response(pollfd fd)
+{
+	std::string httpResponse =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/html; charset=UTF-8\r\n";
+
+	std::string responseBody =
+		"<html>\r\n"
+		"<head>\r\n"
+		"<title>Test Page</title>\r\n"
+		"</head>\r\n"
+		"<body>\r\n"
+		"<h1>Hello, World!</h1>\r\n"
+		"<p>This is a hardcoded response from your server.</p>\r\n"
+		"</body>\r\n"
+		"</html>\r\n";
+
+	// Calculate the Content-Length based on the response body length
+	std::string contentLengthHeader = "Content-Length: " + std::to_string(responseBody.length()) + "\r\n";
+
+	httpResponse += contentLengthHeader;
+	httpResponse += "\r\n"; // End of headers
+
+	ssize_t bytes_sent = send(fd.fd, httpResponse.c_str(), httpResponse.size(), 0);
 
 	if (bytes_sent == -1)
 	{
-		if (errno != -1)
+		perror("send");
+		// Handle the error (e.g., close the socket)
+		close(fd.fd);
+		fd.fd = -1;
+	}
+	else if (bytes_sent != static_cast<ssize_t>(httpResponse.size()))
+	{
+		// Handle partial send if needed
+		// You may need to resend the remaining data
+		// You can implement logic to handle this case
+	}
+	else
+	{
+		// Successfully sent the headers, now send the response body
+		bytes_sent = send(fd.fd, responseBody.c_str(), responseBody.size(), 0);
+
+		if (bytes_sent == -1)
 		{
 			perror("send");
-			/* TODO: handle the error (close socket or else...) */
-		}
-	} else {
-		response_sent += bytes_sent;
-
-		if (response_sent == response_len)
-		{
-			response_sent = 0;
-			fd.events = POLLIN;
+			// Handle the error (e.g., close the socket)
+			close(fd.fd);
+			fd.fd = -1;
 		}
 	}
 }
+
 
 void	Server::end()
 {
