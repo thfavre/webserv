@@ -1,7 +1,7 @@
   - server:
       server_name: site1.com
       port: 8080
-      client_max_body_size: 200k
+      client_max_body_size: 2000k
       error_pages:
         - 404: www/errors/404.html
         - 405: www/errors/405.html

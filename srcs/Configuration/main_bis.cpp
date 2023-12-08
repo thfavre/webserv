@@ -11,8 +11,8 @@ int	main(int argc, char *argv[])
 	}
 	try
 	{
-		ConfigCheck	Config(argv[1]);
-		ConfigParse Parse(Config);
+		ConfigCheck	config(argv[1]);
+		ConfigParse parse(config);
 	}
 	catch (std::exception& e)
 	{
