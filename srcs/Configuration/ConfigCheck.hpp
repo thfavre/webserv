@@ -20,9 +20,9 @@ class ConfigCheck
 
 	private :
 		ConfigCheck(void);
-		std::string	CheckFile(std::string path);
-		std::string _FileContent;
-		std::string	_Path;
+		std::string	checkFile(std::string path);
+		std::string _fileContent;
+		std::string	_path;
 };
 
 #endif

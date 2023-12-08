@@ -7,7 +7,7 @@ ConfigParse::ConfigParse(void)
 
 ConfigParse::ConfigParse(ConfigCheck config)
 {
-	_ServersParsed = ParseFile(config.getFileContent());
+	parseFile(config.getFileContent());
 	return ;
 }
 
@@ -24,206 +24,214 @@ ConfigParse::~ConfigParse(void)
 
 ConfigParse	&ConfigParse::operator=(ConfigParse const & rhs)
 {
-	// to do
+	_serversParsed = rhs._serversParsed;
 	return *this;
 }
 
-std::vector<t_server>	ConfigParse::ParseFile(std::string config)
+std::vector<t_server>	ConfigParse::getServersParsed(void) const
 {
-	std::vector<std::string>	ServersUnparsed = SplitServers(config);
-	std::vector<t_server>	ServersParsed = ParseServers(ServersUnparsed);
-	return (ServersParsed);
+	return (_serversParsed);
 }
 
-
-std::vector<std::string>	ConfigParse::SplitServers(std::string config)
+void	ConfigParse::parseFile(std::string config)
 {
-	std::vector<std::string> ServersUnparsed;
-	std::string	limit = "- server:\n";
-	size_t	pos;
-	size_t	NextPos;
-	size_t	limitSize = limit.size();
+	std::vector<std::string>	servers_unparsed = splitServers(config);
+	parseServers(servers_unparsed);
+	return ;
+}
 
-	while ((pos = config.find(limit)) != std::string::npos)
+std::vector<std::string>	ConfigParse::splitServers(std::string config)
+{
+	std::vector<std::string>	servers_unparsed;
+	std::string					limit = "- server:\n";
+	size_t						limit_size = limit.size();
+	size_t						pos1;
+	size_t						pos2;
+
+	while ((pos1 = config.find(limit)) != std::string::npos)
 	{
-		if ((NextPos = config.find(limit, pos + 1)) != std::string::npos)
+		if ((pos2 = config.find(limit, pos1 + 1)) != std::string::npos)
 		{
-			ServersUnparsed.push_back(config.substr(pos + limitSize, NextPos - (pos + limitSize)));
-			config = config.erase(pos, NextPos - pos);
+			servers_unparsed.push_back(config.substr(pos1 + limit_size, pos2 - (pos1 + limit_size)));
+			config = config.erase(pos1, pos2 - pos1);
 		}
 		else
 		{
-			ServersUnparsed.push_back(config.substr(pos + limitSize));
+			servers_unparsed.push_back(config.substr(pos1 + limit_size));
 			break;
 		}
 	}
-	if (pos == std::string::npos)
+	if (pos1 == std::string::npos)
 		throw std::invalid_argument("Config file invalid");
-	return ServersUnparsed;
+	return (servers_unparsed);
 }
 
-std::vector<t_server>	ConfigParse::ParseServers(std::vector<std::string> ServersUnparsed)
+void	ConfigParse::parseServers(std::vector<std::string> servers_unparsed)
 {
-	std::vector<t_server>	ServersParsed;
-	size_t	NbServers = ServersUnparsed.size();
+	size_t	nb_servers = servers_unparsed.size();
 
-	for (int i = 0; i < NbServers; i++)
+	for (int i = 0; i < nb_servers; i++)
 	{
-		CheckInfosServer(ServersUnparsed[i]);
-		t_server	data;
-		data = ParseInfo(ServersUnparsed[i], data);
-		ServersParsed.push_back(data);
+		checkInfosServer(servers_unparsed[i]);
+		parseInfos(servers_unparsed[i]);
 	}
-	return (ServersParsed);
+	return ;
 }
 
-void		ConfigParse::CheckInfosServer(std::string server)
+void	ConfigParse::checkInfosServer(std::string server)
 {
-	size_t	pos0 = server.find("server_name:");
-	size_t	pos1 = server.find("port:");
-	size_t	pos2 = server.find("client_max_body_size:");
-	size_t	pos3 = server.find("error_pages:");
-	size_t	pos4 = server.find("routes:");
-	if (pos0 != std::string::npos && pos1 != std::string::npos &&
-		pos2 != std::string::npos && pos3 != std::string::npos &&
-		pos4 != std::string::npos && pos0 < pos1 && pos1 < pos2 &&
-		pos2 < pos3 && pos3 < pos4)
+	size_t	pos1 = server.find("server_name: ");
+	size_t	pos2 = server.find("port: ");
+	size_t	pos3 = server.find("client_max_body_size: ");
+	size_t	pos4 = server.find("error_pages:\n");
+	size_t	pos5 = server.find("routes:\n");
+	if (pos1 != std::string::npos && pos2 != std::string::npos &&
+		pos3 != std::string::npos && pos4 != std::string::npos &&
+		pos5 != std::string::npos && pos1 < pos2 && pos2 < pos3 &&
+		pos3 < pos4 && pos4 < pos5)
 		return ;
 	else
 		throw std::invalid_argument("Config file invalid");
 	return;
 }
 
-t_server	ConfigParse::ParseInfo(std::string server, t_server &data)
+void	ConfigParse::parseInfos(std::string server)
 {
-	std::string	NewStr = server;
+	t_server			data;
+	std::string			line;
+	std::istringstream	iss(server);
+	bool				access_error = false;
+	bool				access_routes = false;
 
-	NewStr = ParseServerName(NewStr, data);
-	NewStr = ParsePort(NewStr, data);
-	NewStr = ParseBodySize(NewStr, data);
-	NewStr = ParseErrorPages(NewStr, data);
-	std::cout << "THIS IS A SERVER" << std::endl;
+	while (std::getline(iss, line))
+	{
+		if (line.find("server_name: ") != std::string::npos)
+			data.server_name = parseServerName(line);
+		else if (line.find("port: ") != std::string::npos)
+			data.port = parsePort(line);
+		else if (line.find("client_max_body_size: ") != std::string::npos)
+			data.client_max_body_size = parseBodySize(line);
+		else if (line.find("error_pages:\0") != std::string::npos)
+			access_error = true;
+		else if (line.find("routes:\0") != std::string::npos)
+		{
+			access_error = false;
+			access_routes = true;
+		}
+		else if (access_error)
+			parseErrorPages(line, data);
+		else if (access_routes)
+			parseRoutes(line, data);
+	}
 	std::cout << data.server_name << std::endl;
 	std::cout << data.port << std::endl;
 	std::cout << data.client_max_body_size << std::endl;
-	std::cout << NewStr << std::endl;
-	return (data);
-}
-
-std::string		ConfigParse::ParseServerName(std::string NewStr, t_server &data)
-{
-	size_t	start;
-	size_t	end;
-	std::string	limit = "server_name: ";
-	size_t	limitSize = limit.size();
-
-	if ((start = NewStr.find(limit)) != std::string::npos &&
-		((end = NewStr.find("\n")) != std::string::npos))
+	auto it = data.error_pages.begin();
+	while (it != data.error_pages.end())
 	{
-		data.server_name = NewStr.substr(start + limitSize, end - (start + limitSize));
-		NewStr = NewStr.erase(0, end + 1);
+		std::cout << "Key : " << it->first << ", value : " << it->second << std::endl;
+		it++;
 	}
-	else
-		throw std::invalid_argument("Server_name is invalid during parsing");
-	return (NewStr);
+	_serversParsed.push_back(data);
 }
 
-std::string		ConfigParse::ParsePort(std::string NewStr, t_server &data)
+std::string	ConfigParse::parseServerName(std::string line)
 {
-	size_t	start;
-	size_t	end;
-	std::string	limit = "port: ";
-	std::string	tmp;
-	size_t	limitSize = limit.size();
+	std::string	server_name;
+	std::string	key = "server_name: ";
+	size_t		pos = line.find(key);
+	size_t		key_size = key.size();
 
-	if ((start = NewStr.find(limit)) != std::string::npos &&
-		((end = NewStr.find("\n")) != std::string::npos))
+	server_name = line.substr(pos + key_size);
+	return (server_name);
+}
+
+int		ConfigParse::parsePort(std::string line)
+{
+	int			port;
+	std::string	key = "port: ";
+	size_t		pos = line.find(key);
+	size_t		key_size = key.size();
+	std::string	tmp;
+
+	tmp = line.substr(pos + key_size);
+	if (areAllDigits(tmp))
+		port = std::atoi(tmp.c_str());
+	else
+		throw std::invalid_argument("Port must consist exclusively of numbers");
+	return (port);
+}
+
+size_t	ConfigParse::parseBodySize(std::string line)
+{
+	size_t		client_max_body_size;
+	std::string	key = "client_max_body_size: ";
+	size_t		pos = line.find(key);
+	size_t		key_size = key.size();
+	std::string	tmp;
+
+	tmp = line.substr(pos + key_size);
+	if (!std::isdigit(tmp[0]))
+		throw std::invalid_argument("Client_max_body_size format is not valid");
+	client_max_body_size = std::atoi(tmp.c_str());
+	if (!areAllDigits(tmp))
 	{
-		tmp = NewStr.substr(start + limitSize, end - (start + limitSize));
-		if (areAllDigits(tmp))
-		{
-			data.port = std::atoi(tmp.c_str());
-			NewStr = NewStr.erase(0, end + 1);
-		}
+		pos = tmp.find_first_not_of("0123456789");
+		if (tmp[pos + 1] != '\0')
+			throw std::invalid_argument("Client_max_body_size format is not valid");
+		else if ((tmp[pos] == 'k' || tmp[pos] == 'K') && client_max_body_size < 100000)
+			client_max_body_size *= 1024;
+		else if ((tmp[pos] == 'm' || tmp[pos] == 'M') && client_max_body_size < 100)
+			client_max_body_size *= 1024 * 1024;
 		else
-			throw std::invalid_argument("Port is invalid during parsing");
+			throw std::invalid_argument("Client_max_body_size format is not valid");
 	}
-	else
-		throw std::invalid_argument("Port is invalid during parsing");
-	return (NewStr);
+	return (client_max_body_size);
 }
 
-std::string		ConfigParse::ParseBodySize(std::string NewStr, t_server &data)
+void		ConfigParse::parseErrorPages(std::string line, t_server &data)
 {
-	size_t	start;
-	size_t	end;
-	std::string	limit = "client_max_body_size: ";
-	std::string	tmp;
-	size_t	limitSize = limit.size();
-
-	if ((start = NewStr.find(limit)) != std::string::npos &&
-		((end = NewStr.find("\n")) != std::string::npos))
-	{
-		tmp = NewStr.substr(start + limitSize, end - (start + limitSize));
-		data.client_max_body_size = std::atoi(tmp.c_str());
-		if (!areAllDigits(tmp))
-		{
-			if (((tmp.find("k") != std::string::npos || tmp.find("K") != std::string::npos)) && data.client_max_body_size < 100000)
-				data.client_max_body_size *= 1024;
-			else if (((tmp.find("m") != std::string::npos || tmp.find("M") != std::string::npos)) && data.client_max_body_size < 100)
-				data.client_max_body_size *= 1024 * 1024;
-			else
-				throw std::invalid_argument("Client_max_body_size is invalid during parsing");
-		}
-		NewStr = NewStr.erase(0, end + 1);
-	}
-	else
-		throw std::invalid_argument("Client_max_body_size is invalid during parsing");
-	return (NewStr);
-}
-
-std::string		ConfigParse::ParseErrorPages(std::string NewStr, t_server &data)
-{
-	size_t	start;
-	size_t	end;
-	size_t	delimit;
-	size_t	endLine;
-	std::string	limitStart = "- ";
-	std::string	limitEnd = "routes:\n";
-	std::string	tmp;
-	int		key;
+	int			key;
 	std::string	value;
-	size_t	limitStartSize = limitStart.size();
-	if (NewStr.find("error_pages:\n") == std::string::npos)
-		throw std::invalid_argument("Error_pages is invalid during parsing1");
-	while ((start = NewStr.find(limitStart)) != std::string::npos && (end = NewStr.find(limitEnd)) != std::string::npos && start < end)
-	{
-		if ((delimit = NewStr.find(":")) != std::string::npos)
-		{
-			tmp = NewStr.substr(start + limitStartSize + 1, delimit);
-			std::cout << tmp << std::endl;
-			if (!areAllDigits(tmp))
-				throw std::invalid_argument("Error_pages is invalid during parsing2");
-			key = std::atoi(tmp.c_str());
-		}
-		else
-			throw std::invalid_argument("Error_pages is invalid during parsing3");
-		if ((endLine = NewStr.find("\n")) != std::string::npos)
-			value = NewStr.substr(delimit + 1, endLine);
-		else
-			throw std::invalid_argument("Error_pages is invalid during parsing4");
-		data.error_pages.insert(std::make_pair(key, value));
-		NewStr = NewStr.erase(0, endLine);
-	}
-	if (start == std::string::npos || end == std::string::npos)
-		throw std::invalid_argument("Error_pages is invalid during parsing5");
-	return (NewStr);
+	std::string	tmp;
+	size_t		pos1;
+	size_t		pos2;
+
+	if ((pos1 = line.find("- ")) == std::string::npos || (pos2 = line.find(": ")) == std::string::npos)
+		throw std::invalid_argument("Error_pages format is not valid");
+	tmp = line.substr(pos1 + 2, pos2 - (pos1 + 2));
+	if (!areAllDigits(tmp))
+		throw std::invalid_argument("Error_pages format is not valid");
+	key = std::atoi(tmp.c_str());
+	value = line.substr(pos2 + 2);
+	data.error_pages.insert(std::make_pair(key, value));
 }
 
-bool		ConfigParse::areAllDigits(const std::string& str) // Norme 98 pas respectée
+void		ConfigParse::parseRoutes(std::string line, t_server &data) // final touch ?
 {
-	return std::all_of(str.begin(), str.end(), [](unsigned char c)
+	static std::string	key1;
+	std::string			key2;
+	std::string			value;
+	size_t				delimit;
+
+	if (line.find("- /") != std::string::npos)
+		key1 = line.substr(2, line.size() - 3);
+	else
 	{
-		return std::isdigit(c) != 0;
-	});
+		if ((delimit = line.find(": ")) == std::string::npos)
+			throw std::invalid_argument("Routes format is not valid");
+		key2 = line.substr(0, delimit - 1);
+		value = line.substr(delimit + 2);
+		data.routes[key1].insert(std::make_pair(key2, value));
+	}
+}
+
+bool		ConfigParse::areAllDigits(const std::string& str)
+{
+	for (int i = 0; i < str.size(); i++)
+	{
+		if (str[i] < '0' || str[i] > '9')
+			return false;
+	}
+	return true;
 }

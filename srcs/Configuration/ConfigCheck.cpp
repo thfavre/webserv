@@ -5,9 +5,9 @@ ConfigCheck::ConfigCheck(void)
 	return ;
 }
 
-ConfigCheck::ConfigCheck(std::string path) : _Path(path)
+ConfigCheck::ConfigCheck(std::string path) : _path(path)
 {
-	_FileContent = CheckFile(_Path);
+	_fileContent = checkFile(_path);
 	return ;
 }
 
@@ -24,17 +24,17 @@ ConfigCheck::~ConfigCheck(void)
 
 ConfigCheck	&ConfigCheck::operator=(ConfigCheck const & rhs)
 {
-	_FileContent = rhs._FileContent;
-	_Path = rhs._Path;
+	_fileContent = rhs._fileContent;
+	_path = rhs._path;
 	return *this;
 }
 
 std::string	ConfigCheck::getFileContent(void) const
 {
-	return (_FileContent);
+	return (_fileContent);
 }
 
-std::string	ConfigCheck::CheckFile(std::string path)
+std::string	ConfigCheck::checkFile(std::string path)
 {
 	if (path.empty())
 		throw std::invalid_argument("File path does not exist");
@@ -44,8 +44,8 @@ std::string	ConfigCheck::CheckFile(std::string path)
 	if (!file.is_open())
 		throw std::invalid_argument("File can not be opened");
 
-std::stringstream buffer;
-std::string line;
+std::stringstream	buffer;
+std::string 		line;
 
 	while(std::getline(file, line))
 	{
