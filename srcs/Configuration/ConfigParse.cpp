@@ -123,15 +123,6 @@ void	ConfigParse::parseInfos(std::string server)
 		else if (access_routes)
 			parseRoutes(line, data);
 	}
-	std::cout << data.server_name << std::endl;
-	std::cout << data.port << std::endl;
-	std::cout << data.client_max_body_size << std::endl;
-	auto it = data.error_pages.begin();
-	while (it != data.error_pages.end())
-	{
-		std::cout << "Key : " << it->first << ", value : " << it->second << std::endl;
-		it++;
-	}
 	_serversParsed.push_back(data);
 }
 
@@ -207,7 +198,7 @@ void		ConfigParse::parseErrorPages(std::string line, t_server &data)
 	data.error_pages.insert(std::make_pair(key, value));
 }
 
-void		ConfigParse::parseRoutes(std::string line, t_server &data) // final touch ?
+void		ConfigParse::parseRoutes(std::string line, t_server &data)
 {
 	static std::string	key1;
 	std::string			key2;
@@ -220,7 +211,7 @@ void		ConfigParse::parseRoutes(std::string line, t_server &data) // final touch 
 	{
 		if ((delimit = line.find(": ")) == std::string::npos)
 			throw std::invalid_argument("Routes format is not valid");
-		key2 = line.substr(0, delimit - 1);
+		key2 = line.substr(0, delimit);
 		value = line.substr(delimit + 2);
 		data.routes[key1].insert(std::make_pair(key2, value));
 	}
