@@ -10,7 +10,7 @@ class Response
 {
 	public:
 		Response(const HTTPRequest &request, int socketFd);
-		const std::string getResponse() const;
+		// const std::string getResponse() const;
 
 	private:
 		std::string _httpProtocolVersion;
@@ -18,11 +18,13 @@ class Response
 		std::string _statusMessage;
 		// std::map<std::string, std::string> _headers;
 		// std::string _body;
-		std::string _response;
+		// std::string _response;
 
-		void _formatResponse(const HTTPRequest &request);
+		std::string _formatResponse(const HTTPRequest &request);
+		std::string _setBody(const HTTPRequest &request);
+		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
 		std::string _getContentType(const std::string &path);
-		void _sendResponse(int socketFd);
+		void _sendResponse(int socketFd, const std::string &response);
 };
 
 

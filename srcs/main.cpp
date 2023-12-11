@@ -8,7 +8,7 @@ void webservTest();
 int main()
 {
 	// httpRequestTest();
-	// webservTest();
+	webservTest();
 }
 #include <netinet/in.h>
 #include <stdio.h>
