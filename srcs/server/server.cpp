@@ -235,9 +235,23 @@ void Server::send_response(pollfd fd)
 	}
 	else if (bytes_sent != static_cast<ssize_t>(httpResponse.size()))
 	{
-		// Handle partial send if needed
-		// You may need to resend the remaining data
-		// You can implement logic to handle this case
+		size_t remainingBytes = httpResponse.size() - bytes_sent;
+		const char* remainingData = httpResponse.c_str() + bytes_sent;
+
+		while (remainingBytes > 0)
+		{
+			ssize_t bytes_sent_partial = send(fd.fd, remainingData, remainingBytes, 0);
+			if (bytes_sent_partial == -1)
+			{
+				perror("send");
+				// Handle the error (e.g., close the socket)
+				close(fd.fd);
+				fd.fd = -1;
+				break;
+			}
+			remainingBytes -= bytes_sent_partial;
+			remainingData += bytes_sent_partial;
+		}
 	}
 	else
 	{
