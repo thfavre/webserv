@@ -1,14 +1,15 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include <iostream>
+// #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <map>
-#include <vector>
+// #include <map>
+// #include <vector>
 #include <poll.h>
 #include "../request/HTTPRequest.hpp"
+#include "../Configuration/ConfigParse.hpp"
 
 #define MAX_FDS 200
 
@@ -17,14 +18,6 @@
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
-
-typedef struct s_server {
-	std::string server_name;
-	int port;
-	std::string client_max_body_size;
-	std::map<int, std::string> error_pages;
-	std::map<std::string, std::map<std::string, std::string> >routes;
-} t_server;
 
 class Server
 {
