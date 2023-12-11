@@ -8,6 +8,7 @@ void webservTest();
 int main()
 {
 	// httpRequestTest();
+	// webservTest();
 }
 #include <netinet/in.h>
 #include <stdio.h>
@@ -17,7 +18,6 @@ int main()
 #include <unistd.h>
 void webservTest()
 {
-
 	int PORT = 8080;
 	int domain = AF_INET;
 	int type = SOCK_STREAM;
@@ -75,7 +75,6 @@ void webservTest()
 			// const char *respond = responseString.c_str();
 
 			// write(new_socket, respond, strlen(respond));
-
 		}
 		printf("done\n");
 		// printf("------------------Hello message sent-------------------\n");
@@ -114,5 +113,8 @@ void httpRequestTest()
 		std::cout << BOLD << "Get individual:" << RESET << std::endl;
 		std::cout << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
+	}
+	else {
+		std::cout << RED << "Error parsing request" << RESET << std::endl;
 	}
 }
