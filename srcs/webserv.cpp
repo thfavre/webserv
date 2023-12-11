@@ -22,7 +22,7 @@ int main(int ac, char **av)
 	site1Config.client_max_body_size = "200k";
 	site1Config.error_pages[404] = "www/errors/404.html";
 	site1Config.error_pages[405] = "www/errors/405.html";
-	site1Config.routes["/admin"]["root"] = "./www/site1/";
+	site1Config.routes["/admin"]["root"] = "webpage/start.html";
 	site1Config.routes["/admin"]["repertory_listing"] = "true";
 
 	mockConfigs.push_back(site1Config);
