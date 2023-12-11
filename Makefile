@@ -23,11 +23,7 @@ all: $(TARGET)
 	@echo "$(COLOR_GREEN)Compilation completed successfully!$(COLOR_RESET)"
 
 $(TARGET): $(OBJECTS)
-<<<<<<< HEAD
-#	 @echo "$(COLOR_YELLOW)Compiling srcs/main.cpp..$(COLOR_RESET)"
-=======
 	@echo "$(COLOR_YELLOW)Compiling srcs/main.cpp..$(COLOR_RESET)"
->>>>>>> 0f87004 (Step before merge)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 	@echo "$(COLOR_CYAN)Linking $(TARGET)...$(COLOR_RESET)"
 

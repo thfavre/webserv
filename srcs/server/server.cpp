@@ -146,6 +146,13 @@ void	Server::read_data(pollfd fd)
 		std::string	request;
 		do {
 			request.append(buffer, bytes_read);
+			// if (request.size() > _configs.client_max_body_size)		//TODO: add the struct to the run function
+			// {
+			// 	//throw exception 413 client size exceeded
+			// 	close(fd.fd);
+			// 	fd.fd = -1;
+			// 	return;
+			// }
 			if (request.find("\r\n\r\n") != std::string::npos) {
 				break;
 			}
