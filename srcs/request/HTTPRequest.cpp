@@ -35,7 +35,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData)
 	_statusCode = 0;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	_parseRequest(requestData);
-	_executeMethod();
 }
 
 void HTTPRequest::_parseRequest(std::string requestData)
@@ -244,18 +243,18 @@ void HTTPRequest::_executeMethod()
 {
 	if (_statusCode != 0)
 	{
+		// show error page
 		return;
 	}
 
 	if (_requestMethod == "GET")
 	{
-
+		// show resource
 
 	}
 	else if (_requestMethod == "POST")
 	{
 		// create resource
-
 	}
 	else if (_requestMethod == "DELETE")
 	{
@@ -265,8 +264,6 @@ void HTTPRequest::_executeMethod()
 
 bool HTTPRequest::isError() const
 {
-	if (_statusCode == 0)
-		return (false);
 	return (_statusCode < 200 || _statusCode >= 300);
 }
 
