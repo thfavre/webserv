@@ -70,7 +70,7 @@ void	ConfigParse::parseServers(std::vector<std::string> servers_unparsed)
 {
 	size_t	nb_servers = servers_unparsed.size();
 
-	for (int i = 0; i < nb_servers; i++)
+	for (size_t i = 0; i < nb_servers; i++)
 	{
 		checkInfosServer(servers_unparsed[i]);
 		parseInfos(servers_unparsed[i]);
@@ -219,7 +219,7 @@ void		ConfigParse::parseRoutes(std::string line, t_server &data)
 
 bool		ConfigParse::areAllDigits(const std::string& str)
 {
-	for (int i = 0; i < str.size(); i++)
+	for (size_t i = 0; i < str.size(); i++)
 	{
 		if (str[i] < '0' || str[i] > '9')
 			return false;

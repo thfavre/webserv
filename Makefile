@@ -11,7 +11,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 # Source files
-SOURCES = srcs/webserv.cpp $(wildcard srcs/request/*.cpp) $(wildcard srcs/server/*.cpp)
+SOURCES = srcs/webserv.cpp $(wildcard srcs/request/*.cpp) $(wildcard srcs/server/*.cpp) $(wildcard srcs/Configuration/*.cpp)
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
