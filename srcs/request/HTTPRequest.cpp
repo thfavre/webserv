@@ -1,9 +1,11 @@
 #include <sstream>
+#include <fstream>
 #include <map>
 #include <vector>
 
 #include "HTTPRequest.hpp"
 #include "split.hpp"
+#include "checkFileExists.hpp"
 
 #define LINE_END "\r\n"
 
@@ -34,80 +36,10 @@ HTTPRequest::HTTPRequest(const std::string &requestData)
 {
 	_statusCode = 0;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
-	_parseRequest(requestData);
-	_executeMethod();
-}
-
-void HTTPRequest::_parseRequest(std::string requestData)
-{
 	try
 	{
-		// Parse the request components
-		// printf("***Request data: ");
-		// for (const char *p = requestData.c_str(); *p != '\0'; ++p)
-		// {
-		// 	int c = (unsigned char)*p;
-
-		// 	switch (c)
-		// 	{
-		// 	case '\\':
-		// 		printf("\\\\");
-		// 		break;
-		// 	case '\n':
-		// 		printf("\\n");
-		// 		break;
-		// 	case '\r':
-		// 		printf("\\r");
-		// 		break;
-		// 	case '\t':
-		// 		printf("\\t");
-		// 		break;
-
-		// 		// TODO: Add other C character escapes here.  See:
-		// 		// <https://en.wikipedia.org/wiki/Escape_sequences_in_C#Table_of_escape_sequences>
-
-		// 	default:
-		// 		if (isprint(c))
-		// 		{
-		// 			putchar(c);
-		// 		}
-		// 		else
-		// 		{
-		// 			printf("\\x%X", c);
-		// 		}
-		// 		break;
-		// 	}
-		// }
-		// printf("***END\n\n");
-		std::cout << "requestData\n" << requestData << std::endl;
-		std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
-		// add empty body if the body is empty
-		if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
-			requestParts.push_back("");
-		if (requestParts.size() != 2)
-		{
-			_statusCode = 400;
-			throw HTTPRequest::InvalidRequestException("Invalid request format");
-		}
-
-		std::string requestHeaderSection = requestParts[0];
-		std::string body = requestParts[1];
-
-		std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
-		if (requestHeaderLines.size() == 0)
-		{
-			_statusCode = 400;
-			throw HTTPRequest::InvalidRequestException("Missing request line");
-		}
-
-		std::string requestLine = requestHeaderLines[0];
-		std::string headersWithoutRequestLine = "";
-		if (requestHeaderLines.size() == 2)
-			headersWithoutRequestLine = requestHeaderLines[1];
-
-		_parseRequestLine(requestLine);
-		_parseHeaders(headersWithoutRequestLine);
-		_parseBody(body);
+		_parseRequest(requestData);
+		_executeMethod();
 	}
 	catch (InvalidRequestException &e)
 	{
@@ -116,7 +48,87 @@ void HTTPRequest::_parseRequest(std::string requestData)
 			_statusCode = 400;
 		std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
 	}
+}
 
+void HTTPRequest::_parseRequest(std::string requestData)
+{
+	// try
+	// {
+	// Parse the request components
+	// printf("***Request data: ");
+	// for (const char *p = requestData.c_str(); *p != '\0'; ++p)
+	// {
+	// 	int c = (unsigned char)*p;
+
+	// 	switch (c)
+	// 	{
+	// 	case '\\':
+	// 		printf("\\\\");
+	// 		break;
+	// 	case '\n':
+	// 		printf("\\n");
+	// 		break;
+	// 	case '\r':
+	// 		printf("\\r");
+	// 		break;
+	// 	case '\t':
+	// 		printf("\\t");
+	// 		break;
+
+	// 		// TODO: Add other C character escapes here.  See:
+	// 		// <https://en.wikipedia.org/wiki/Escape_sequences_in_C#Table_of_escape_sequences>
+
+	// 	default:
+	// 		if (isprint(c))
+	// 		{
+	// 			putchar(c);
+	// 		}
+	// 		else
+	// 		{
+	// 			printf("\\x%X", c);
+	// 		}
+	// 		break;
+	// 	}
+	// }
+	// printf("***END\n\n");
+	std::cout << "**Request :\n"
+			  << requestData << std::endl;
+	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
+	// add empty body if the body is empty
+	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
+		requestParts.push_back("");
+	if (requestParts.size() != 2)
+	{
+		_statusCode = 400;
+		throw HTTPRequest::InvalidRequestException("Invalid request format");
+	}
+
+	std::string requestHeaderSection = requestParts[0];
+	std::string body = requestParts[1];
+
+	std::vector<std::string> requestHeaderLines = split(requestHeaderSection, std::string(LINE_END), 2);
+	if (requestHeaderLines.size() == 0)
+	{
+		_statusCode = 400;
+		throw HTTPRequest::InvalidRequestException("Missing request line");
+	}
+
+	std::string requestLine = requestHeaderLines[0];
+	std::string headersWithoutRequestLine = "";
+	if (requestHeaderLines.size() == 2)
+		headersWithoutRequestLine = requestHeaderLines[1];
+
+	_parseRequestLine(requestLine);
+	_parseHeaders(headersWithoutRequestLine);
+	_parseBody(body);
+	// }
+	// catch (InvalidRequestException &e)
+	// {
+	// 	// Handle invalid request error
+	// 	if (_statusCode == 0)
+	// 		_statusCode = 400;
+	// 	std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
+	// }
 }
 
 void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO should return a bool instead of throwing an exception ?
@@ -247,28 +259,54 @@ void HTTPRequest::_executeMethod()
 	{
 		return;
 	}
-
+	_statusCode = 200;
 	if (_requestMethod == "GET")
 	{
-
-
 	}
 	else if (_requestMethod == "POST")
 	{
 		// create resource
+		std::string _root = "./"; // TODO come from config parser
+		_root += _requestPath;
 
+		// Check if file already exists
+		if (checkFileExists(_root))
+		{
+			// File exists, respond with 409 Conflict
+			_statusCode = 409; // Conflict
+			return;
+		}
+		// Create file
+		std::ofstream file;
+		file.open(_root.c_str(), std::ios::out);
+		if (!file.is_open())
+		{
+			_statusCode = 500; // Internal Server Error
+			return;
+		}
+		file << _body;
+		file.close();
+		_statusCode = 201; // Created
 	}
 	else if (_requestMethod == "DELETE")
 	{
 		// delete resource
+		std::string _root = "./"; // TODO come from config parser
+		_root += _requestPath;
+		if (!checkFileExists(_root))
+		{
+			// File does not exist, respond with 404 Not Found
+			_statusCode = 404; // Not Found
+			return;
+		}
+		if (remove(_root.c_str()) != 0)
+		{
+			// Error deleting file, respond with 500 Internal Server Error
+			_statusCode = 500; // Internal Server Error
+			return;
+		}
+		_statusCode = 200; // OK
 	}
-}
-
-bool HTTPRequest::isError() const
-{
-	if (_statusCode == 0)
-		return (false);
-	return (_statusCode < 200 || _statusCode >= 300);
 }
 
 /* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)

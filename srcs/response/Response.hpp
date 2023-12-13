@@ -15,7 +15,7 @@ class Response
 	private:
 		std::string _httpProtocolVersion;
 		int _statusCode;
-		std::string _statusMessage;
+		// std::string _statusMessage;
 		// std::map<std::string, std::string> _headers;
 		// std::string _body;
 		// std::string _response;
@@ -25,6 +25,7 @@ class Response
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
 		std::string _getContentType(const std::string &path);
 		void _sendResponse(int socketFd, const std::string &response);
+		bool _isError();
 };
 
 

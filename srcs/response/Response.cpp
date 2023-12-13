@@ -37,6 +37,7 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 	_statusCodes[403] = "Forbidden";
 	_statusCodes[404] = "Not Found";
 	_statusCodes[405] = "Method Not Allowed";
+	_statusCodes[409] = "Conflict";
 	_statusCodes[413] = "Payload Too Large";
 	_statusCodes[500] = "Internal Server Error";
 	_statusCodes[501] = "Not Implemented";
@@ -48,22 +49,36 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 
 Response::Response(const HTTPRequest &request, int socketFd)
 {
-	_httpProtocolVersion = request.getHttpProtocolVersion();
+	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 
 	_statusCode = request.getStatusCode();
 	std::string response = _formatResponse(request);
+	std::cout << "**Response : \n" << std::endl << response << std::endl;
 	_sendResponse(socketFd, response);
 }
+
+
 
 std::string Response::_formatResponse(const HTTPRequest &request)
 {
 	// set body
 	std::string body;
-	body = _setBody(request);
-	if (_statusCode != 200 && _statusCode != 0)
+	std::cout << "Status code : " << _statusCode << std::endl;
+	if (_isError())
 	{
-		_statusMessage = "Not Found";
+		// // _statusMessage = "Not Found";
+		// ! TODO check if the error have a custom error page
+		// ! TODO if no custom error page, use default error page
 		body = "<html><body><h1>Error Code : " + std::to_string(_statusCode) + " (" + getStatusCodeMessage(_statusCode) + ")" + " </h1></body></html>";
+		// manageErrorResponses();
+		std::cout << "Error body : " << body << std::endl;
+
+	}
+	else
+	{
+		body = _setBody(request);
+		if (_isError())
+			return _formatResponse(request);
 	}
 
 	// set headers
@@ -83,11 +98,8 @@ std::string Response::_setBody(const HTTPRequest &request)
 	file.open(_root.c_str(), std::ios::in);
 	if (!file.is_open())
 	{
-		printf("Error opening file\n");
-		_statusCode = 404;
-		_statusMessage = "Internal Server Error";
-		// _formatResponse();
-		// ? TODO Throw exception
+		std::cerr << "Error opening file" << std::endl;
+		_statusCode = 404; // Not Found
 		return ("");
 	}
 	std::string line;
@@ -99,32 +111,30 @@ std::string Response::_setBody(const HTTPRequest &request)
 
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {
-	(void) request;
 	std::string headers;
 	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
 	headers += "Content-Type: text/html\r\n";
 	if (bodyLength > 0)
 		headers += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
 
-	headers += "Connection: close\r\n";
-
-	// for (auto it = _headers.begin(); it != _headers.end(); it++)
-	// {
-	// 	headers += it->first + ": " + it->second + "\r\n";
-	// }
+	// Connection
+	if (request.getHeader("Connection") == "keep-alive")
+		headers += "Connection: keep-alive\r\n";
+	else
+		headers += "Connection: close\r\n";
 
 	return (headers);
 }
 
-std::string Response::_getContentType(const std::string &path)
-{
-	std::string::size_type dotIndex = path.find_last_of('.');
-	if (dotIndex == std::string::npos)
-		return ("application/octet-stream"); // TODO check if this is the right default value
-	std::string extension = path.substr(dotIndex + 1);
-	// ? TODO check if this is the right way to do this
-	return ("text/html");
-}
+// std::string Response::_getContentType(const std::string &path)
+// {
+// 	std::string::size_type dotIndex = path.find_last_of('.');
+// 	if (dotIndex == std::string::npos)
+// 		return ("application/octet-stream"); // TODO check if this is the right default value
+// 	std::string extension = path.substr(dotIndex + 1);
+// 	// ? TODO check if this is the right way to do this
+// 	return ("text/html");
+// }
 
 void Response::_sendResponse(int socketFd, const std::string &response)
 {
@@ -133,6 +143,13 @@ void Response::_sendResponse(int socketFd, const std::string &response)
 		printf("Response sent\n"); // TODO don't use printf
 	else
 		printf("Error sending response\n");
+}
+
+bool Response::_isError()
+{
+	if (_statusCode < 200 || _statusCode >= 300)
+		return true;
+	return false;
 }
 
 // /* ****** Getters ****** */

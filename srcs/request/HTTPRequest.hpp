@@ -19,7 +19,7 @@ public:
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
 	const int &getStatusCode() const;
-	bool isError() const;
+	// bool isError() const;
 
 	class InvalidRequestException : public std::exception
 	{
