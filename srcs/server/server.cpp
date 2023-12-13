@@ -6,6 +6,12 @@ Server::Server()
 	memset(this->_fds, 0, sizeof(this->_fds));
 }
 
+Server::Server(const t_server &server) : _server(server)
+{
+	this->_listening_socket = -1;
+	memset(this->_fds, 0, sizeof(this->_fds));
+}
+
 Server::~Server()
 {
 	if (this->_listening_socket != -1) {
@@ -31,11 +37,11 @@ Server::~Server()
 
 // }
 
-void	Server::setup(const t_server &config)
+void	Server::setup()
 {
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
-	this->_sockaddr.sin_port = htons(config.port);		//TODO: check if port is <= 0 || > 65535
+	this->_sockaddr.sin_port = htons(this->_server.port);		//TODO: check if port is <= 0 || > 65535
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == -1)
 	{
@@ -45,7 +51,7 @@ void	Server::setup(const t_server &config)
 
 	if (bind(this->_listening_socket, (struct sockaddr*)&this->_sockaddr, sizeof(sockaddr)) < 0)
 	{
-		std::cout << "Failed to bind to port " << config.port << ". errno: " << errno << std::endl;
+		std::cout << "Failed to bind to port " << this->_server.port << ". errno: " << errno << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -63,7 +69,7 @@ void	Server::handle_request(std::string const &request_raw)
 {
 	HTTPRequest	request(request_raw);
 
-	if (!request.isError())
+	if (!request.isError())	//TODO: make appropriate error throw
 	{
 		std::cout << BOLD << "Request Infos:" << RESET << std::endl;
 		std::cout << YELLOW << request << RESET << std::endl;
@@ -72,6 +78,7 @@ void	Server::handle_request(std::string const &request_raw)
 		std::cout << "request.getHttpProtocolVersion(): " << CYAN << request.getHttpProtocolVersion() << RESET << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << CYAN << request.getHeader("Host") << RESET << std::endl;
 	}
+
 }
 
 void	Server::accept_connection()
@@ -85,9 +92,14 @@ void	Server::accept_connection()
 			{
 				this->_fds[i].fd = new_socket;
 				this->_fds[i].events = POLLIN;
+				std::cout << "Accepted new connection on socket " << new_socket << std::endl;
 				break;
 			}
 		}
+	} else {
+		//TODO: throw error exception
+		std::cout << "Error accept: " << new_socket << std::endl;
+		return ;
 	}
 }
 
@@ -107,11 +119,23 @@ void	Server::run()
 
 	while(true)
 	{
+		std::cout << "File descriptors before poll:" << std::endl;
+		for (int i = 0; i < MAX_FDS; i++)
+		{
+			std::cout << "FD[" << i << "]: " << this->_fds[i].fd << std::endl;
+		}
+
 		int	ret = poll(this->_fds, MAX_FDS, -1);
-		if (ret <= 0)
+		if (ret < 0)
 		{
 			perror("poll");
 			return ;
+		}
+
+		std::cout << "File descriptors after poll:" << std::endl;
+		for (int i = 0; i < MAX_FDS; i++)
+		{
+			std::cout << "FD[" << i << "]: " << this->_fds[i].fd << std::endl;
 		}
 
 		if (ret > 0)
@@ -120,6 +144,7 @@ void	Server::run()
 				accept_connection();
 			for (int i = 1; i < MAX_FDS; i++)
 			{
+				std::cout << this->_fds[i].revents << std::endl;
 				if (this->_fds[i].fd != -1)
 				{
 					if (this->_fds[i].revents & POLLIN)
@@ -131,6 +156,7 @@ void	Server::run()
 						close(this->_fds[i].fd);
 						this->_fds[i].fd = -1;
 					}
+					this->_fds[i].revents = 0;
 				}
 			}
 		}
@@ -143,20 +169,29 @@ void	Server::read_data(pollfd fd)
 	ssize_t	bytes_read = recv(fd.fd, buffer, sizeof(buffer), 0);
 
 	if (bytes_read > 0) {
-		std::string	request;
-		do {
+		std::string request;
+		while (true) {
+			bytes_read = recv(fd.fd, buffer, sizeof(buffer), 0);
+			if (bytes_read <= 0) {
+				if (bytes_read == 0)
+				{
+					close(fd.fd);
+					fd.fd = -1;
+				}
+				break;
+			}
+			if (request.size() + bytes_read > this->_server.client_max_body_size) {
+				// Request size exceeded the limit, close the connection.
+				close(fd.fd);
+				fd.fd = -1;
+				return;
+			}
 			request.append(buffer, bytes_read);
-			// if (request.size() > _configs.client_max_body_size)		//TODO: add the struct to the run function
-			// {
-			// 	//throw exception 413 client size exceeded
-			// 	close(fd.fd);
-			// 	fd.fd = -1;
-			// 	return;
-			// }
 			if (request.find("\r\n\r\n") != std::string::npos) {
 				break;
 			}
-		} while ((bytes_read = recv(fd.fd, buffer, sizeof(buffer), 0)) > 0);
+		}
+		std::cout << "Request: " << request << std::endl;
 		handle_request(request);
 	} else if (bytes_read == 0) {
 		close(fd.fd);
@@ -279,11 +314,6 @@ void Server::send_response(pollfd fd)
 void	Server::end()
 {
 
-}
-
-void	Server::setConfigs(std::vector<t_server> &configs)
-{
-	_configs = configs;
 }
 
 /* IDEA TO HANDLE ERRORS IN SETUP

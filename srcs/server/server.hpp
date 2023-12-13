@@ -22,18 +22,19 @@
 class Server
 {
 	int						_listening_socket;
-	std::vector<t_server>	_configs;
+	t_server				_server;
 	sockaddr_in				_sockaddr;
 	pollfd					_fds[MAX_FDS];
 
 
 	public:
 		Server();
+		Server(const t_server &server);
 		~Server();
 		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
 
-		void	setup(const t_server &config);
+		void	setup();
 		void	handle_request(std::string const &request_raw);
 		void	accept_connection();
 		void	read_data(pollfd fd);
@@ -41,8 +42,6 @@ class Server
 		void	run();
 		void	close(int connection);
 		void	end();
-
-		void	setConfigs(std::vector<t_server> &configs);
 };
 
 #endif

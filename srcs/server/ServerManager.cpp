@@ -16,8 +16,8 @@ void	ServerManager::launchServers()
 	{
 		const t_server& config = *it;
 
-		Server server;
-		server.setup(config);
+		Server server(config);
+		server.setup();
 		server.run();
 		_servers.push_back(server);
 	}
