@@ -11,7 +11,7 @@
 #include "../request/HTTPRequest.hpp"
 #include "../Configuration/ConfigParse.hpp"
 
-#define MAX_FDS 200
+#define MAX_CONNECTION 200
 
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
@@ -19,12 +19,14 @@
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
+#define UNSET -1
+
 class Server
 {
 	int						_listening_socket;
 	t_server				_server;
 	sockaddr_in				_sockaddr;
-	pollfd					_fds[MAX_FDS];
+	pollfd					_fds[MAX_CONNECTION];
 
 
 	public:
@@ -35,13 +37,16 @@ class Server
 		// Server	&operator=(const Server &src);
 
 		void	setup();
-		void	handle_request(std::string const &request_raw);
-		void	accept_connection();
-		void	read_data(pollfd fd);
-		void	send_response(pollfd fd);
+		void	handleRequest(std::string const &request_raw);
+		void	acceptClient();
+		void	readData(pollfd fd);
+		void	sendResponse(pollfd fd);
 		void	run();
-		void	close(int connection);
+		void	close(const int &connection);
+		void	closeSingle(const int &index);
 		void	end();
+
+		int		getPollSig();
 };
 
 #endif
