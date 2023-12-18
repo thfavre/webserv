@@ -2,12 +2,12 @@
 
 Server::Server()
 {
-
+	memset(&_fds, UNSET, sizeof(_fds));
 }
 
 Server::Server(const t_server &server) : _server(server)
 {
-
+	memset(&_fds, UNSET, sizeof(_fds));
 }
 
 Server::~Server()
@@ -21,43 +21,117 @@ void	Server::setup()
 		Need to reset and prepare the _fds[]
 		Need to prepare the listening socket on port (socket(), bind(), listen())
 	*/
+	for (int i = 0; i <= MAX_CONNECTION; i++)
+	{
+		if (this->_fds[i].fd <= 3)
+		{
+			close (this->_fds[i].fd);
+			this->_fds[i].fd = UNSET;
+		}
+		this->_fds[i].fd = UNSET;
+		this->_fds[i].events = 0;
+		this->_fds[i].revents = 0;
+	}
+
+	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->_listening_socket == UNSET)
+	{
+		perror("listening socket issue");
+		return ;
+	}
+	std::cout << "port " << this->_server.port << std::endl;
+	std::cout << "listening_socket " << this->_listening_socket << std::endl;
+
+	memset(&this->_sockaddr, 0, sizeof(this->_sockaddr));
+	_sockaddr.sin_family = AF_INET;
+	_sockaddr.sin_port = htons(this->_server.port);
+	_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (bind(this->_listening_socket, (struct sockaddr *) &_sockaddr, sizeof(_sockaddr)) == UNSET)
+	{
+		perror("listening socket bind");
+		close(this->_listening_socket);
+		return ;
+	}
+
+	if (listen(this->_listening_socket, 10) == UNSET)
+	{
+		perror("listen");
+		close(this->_listening_socket);
+		return ;
+	}
+
+	this->_fds[0].fd = this->_listening_socket;
+	this->_fds[0].events = POLLIN;
 }
 
-void	Server::handleRequest(std::string const &request_raw)
-{
-	/*
-		Check kind of request (if not done in parsing)
-		Redirect it to the correct place
-	*/
-}
-
-void	Server::acceptClient()
+void	Server::acceptClient(const int &index)
 {
 	/*
 		Check if there is enough place available for new connection
-
 	*/
+	int available_fd;
+	if ((available_fd = availableFd()) != NO_SIGNAL)
+	{
+		int	client_fd = accept(this->_fds[index].fd, NULL, NULL);
+		if (client_fd == NO_SIGNAL)
+		{
+			this->_fds[available_fd].fd = UNSET;
+			perror("issue accepting signal");
+		}
+		std::cout << "accepting client " << available_fd << std::endl;
+		this->_fds[available_fd].fd = client_fd;
+		this->_fds[available_fd].events = POLLIN;
+		this->_fds[available_fd].revents = 0;
+	}
+	else
+		perror ("No available fd at the moment");
 }
 
-int		Server::getPollSig()
+int		Server::availableFd()
 {
-	//for loop that iterates through _fds to check which one got a signal and returns the index
+	for (int i = 0; i < MAX_CONNECTION; i++)
+	{
+		if (this->_fds[i].fd == UNSET)
+		{
+			std::cout << "available fd " << this->_fds[i].fd << std::endl;
+			this->_fds[i].fd = WAITING;
+			return i;
+		}
+	}
+	return -1;
 }
 
-void	Server::readData(pollfd fd)
+void	Server::handleRequest(const int &index)
 {
 	/*
-		Get the data from the client and put it into an std::string
+		get the request as a string for the request parser
+		Check kind of request (if not done in parsing)
+		Redirect it to the correct place
 	*/
+	char	request_buffer[MAX_REQUEST_SIZE];
+	int		bytes_received = recv(this->_fds[index].fd, request_buffer, MAX_REQUEST_SIZE, 0);
+	if (bytes_received == NO_SIGNAL)
+	{
+		perror("issue recv");
+		close(this->_fds[index].fd);
+		return ;
+	}
+
+	std::string raw_request(request_buffer, bytes_received);
+	std::cout << "Raw_request: " << raw_request << std::endl;
+	HTTPRequest	request(raw_request);
+	// Response response(request, this->_fds[index].fd);
 }
 
-void	Server::sendResponse(pollfd fd)
+void	Server::sendResponse(const int &index)
 {
 	/*
 		Not sure if done directly from Request to the Response
 		Make liaison if needed with checks for errors
 		To see with Thomas
 	*/
+	(void)index;
 }
 
 void	Server::run()
@@ -70,22 +144,61 @@ void	Server::run()
 			if client signal, handle request
 			if from CGI, not sure yet
 	*/
+
+	// int	sig_index;
+	while (true)
+	{
+		if (poll(_fds, MAX_CONNECTION, 1000) < 0)
+			perror("poll() error");
+
+		// if ((sig_index == getPollSig()) == NO_SIGNAL)
+		// 	perror("issue no signal, end server");
+		// std::cout << "poll connection " << this->_fds[0].fd << std::endl;
+
+		for (int i = 0; i < MAX_CONNECTION; i++)
+		{
+			if (this->_fds[i].fd == this->_listening_socket && (this->_fds[i].revents == POLLIN))
+				acceptClient(i);
+			else if (this->_fds[i].fd != this->_listening_socket && (this->_fds[i].revents & POLLIN))
+				handleRequest(i);
+			else if (this->_fds[i].fd != this->_listening_socket && (this->_fds[i].revents & POLLOUT))
+				sendResponse(i);
+			else if (this->_fds[i].fd != this->_listening_socket && (this->_fds[i].revents & (POLLERR | POLLHUP)))
+				perror("error on established connection");
+				close(this->_fds[i].fd);
+		}
+	}
 }
 
 void	Server::closeSingle(const int &index)
 {
 	//close a single fd and reset it (UNSET, revents and events too)
+	if (this->_fds[index].fd >= 3)
+		close(this->_fds[index].fd);
+	this->_fds[index].fd = UNSET;
+	this->_fds[index].events = 0;
+	this->_fds[index].revents = 0;
 }
 
-void	Server::close(const int &index)
+void	Server::closeAll()
 {
 	//close every _fds[]
+	for (int i = 0; i < MAX_CONNECTION; i++)
+		closeSingle(i);
 }
 
 void	Server::end()
 {
-	// ?
+	closeAll();
+	std::cout << "End of server " << this->_server.server_name << std::endl;
 }
+
+
+
+
+
+
+
 
 
 
@@ -528,10 +641,10 @@ void	Server::end()
 // }
 
 
-void	Server::end()
-{
+// void	Server::end()
+// {
 
-}
+// }
 
 /* IDEA TO HANDLE ERRORS IN SETUP
 

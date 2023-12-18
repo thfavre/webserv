@@ -11,15 +11,17 @@
 #include "../request/HTTPRequest.hpp"
 #include "../Configuration/ConfigParse.hpp"
 
-#define MAX_CONNECTION 200
-
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
+#define MAX_CONNECTION 50
+#define MAX_REQUEST_SIZE 1000
+#define WAITING 0
 #define UNSET -1
+#define NO_SIGNAL -1
 
 class Server
 {
@@ -37,16 +39,16 @@ class Server
 		// Server	&operator=(const Server &src);
 
 		void	setup();
-		void	handleRequest(std::string const &request_raw);
-		void	acceptClient();
-		void	readData(pollfd fd);
-		void	sendResponse(pollfd fd);
+		void	acceptClient(const int &index);
+		void	handleRequest(const int &index);
+		void	sendResponse(const int &index);
 		void	run();
-		void	close(const int &connection);
 		void	closeSingle(const int &index);
+		void	closeAll();
 		void	end();
 
-		int		getPollSig();
+		// int		getPollSig();
+		int		availableFd();
 };
 
 #endif
