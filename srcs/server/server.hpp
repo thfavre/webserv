@@ -8,6 +8,7 @@
 // #include <map>
 // #include <vector>
 #include <poll.h>
+#include <fcntl.h>
 #include "../request/HTTPRequest.hpp"
 #include "../Configuration/ConfigParse.hpp"
 

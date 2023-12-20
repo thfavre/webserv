@@ -15,10 +15,10 @@ int main(int ac, char **av)
 		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
 		return 1;
 	}
-	ConfigCheck		config(av[1]);
-	ConfigParse		parse(config);
-	ServerManager	serverManager(parse.getServersParsed());
 	try {
+		ConfigCheck		config(av[1]);
+		ConfigParse		parse(config);
+		ServerManager	serverManager(parse.getServersParsed());
 		serverManager.launchServers();
 	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
