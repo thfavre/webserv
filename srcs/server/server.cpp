@@ -92,17 +92,15 @@ void	Server::acceptClient(const int &index)
 	{
 		socklen_t	addr_len = sizeof(client_addr);
 		int client_fd = accept(this->_fds[index].fd, (struct sockaddr *)&client_addr, &addr_len);
-		std::cout << "client_fd: " << client_fd << std::endl;
 		if (client_fd == NO_SIGNAL)
 		{
 			this->_fds[available_fd].fd = UNSET;
 			perror("issue accepting signal");
 		}
-		exit(1);
 		std::cout << "accepting client " << available_fd << std::endl;
 		this->_fds[available_fd].fd = client_fd;
 		this->_fds[available_fd].events = POLLIN;
-		// this->_fds[available_fd].revents = 0;
+		this->_fds[available_fd].revents = 0;
 	}
 	else
 		perror ("No available fd at the moment");
@@ -130,7 +128,7 @@ void	Server::handleRequest(const int &index)
 		Redirect it to the correct place
 	*/
 	char	request_buffer[MAX_REQUEST_SIZE];
-	int		bytes_received = recv(this->_fds[index].fd, request_buffer, MAX_REQUEST_SIZE, 0);
+	int		bytes_received = read(this->_fds[index].fd, request_buffer, MAX_REQUEST_SIZE);
 	if (bytes_received == NO_SIGNAL)
 	{
 		perror("issue recv");
@@ -168,19 +166,18 @@ void	Server::run()
 	// int	sig_index;
 	while (true)
 	{
-		// if (poll(_fds, MAX_CONNECTION, 1000) < 0)
-		// 	perror("poll() error");
-		int debug = poll(this->_fds, MAX_CONNECTION, 1000);
-		std::cout << "debug value: " << debug << std::endl;
+		if (poll(_fds, MAX_CONNECTION, 1000) < 0)
+			perror("poll() error");
+
 		// if ((sig_index == getPollSig()) == NO_SIGNAL)
 		// 	perror("issue no signal, end server");
 		// std::cout << "poll connection " << this->_fds[0].fd << std::endl;
 
 		for (int i = 0; i < MAX_CONNECTION; i++)
 		{
-			std::cout << "fd[" << i << "].fd: " << this->_fds[i].fd << std::endl;
-			std::cout << "fd[" << i << "].events: " << this->_fds[i].events << std::endl;
-			std::cout << "fd[" << i << "].revents: " << this->_fds[i].revents << std::endl;
+			// std::cout << "fd[" << i << "].fd: " << this->_fds[i].fd << std::endl;
+			// std::cout << "fd[" << i << "].events: " << this->_fds[i].events << std::endl;
+			// std::cout << "fd[" << i << "].revents: " << this->_fds[i].revents << std::endl;
 			// std::cout << this->_fds[i].fd << " " << this->_listening_socket << "revents" << this->_fds[i].revents << std::endl;
 			if (_fds[i].fd == UNSET)
 				continue;
@@ -194,8 +191,10 @@ void	Server::run()
 			else if (this->_fds[i].revents & POLLOUT)
 				sendResponse(i);
 			else if (this->_fds[i].revents & (POLLERR | POLLHUP) && _fds[i].fd != _listening_socket)
+			{
 				perror("error on established connection");
 				close(this->_fds[i].fd);
+			}
 		}
 	}
 }
