@@ -18,8 +18,8 @@ public:
 	const std::string &getHttpProtocolVersion() const;
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
-	const int &getErrorCode() const;
-	bool isError() const;
+	const int &getStatusCode() const;
+	// bool isError() const;
 
 	class InvalidRequestException : public std::exception
 	{
@@ -40,7 +40,7 @@ private:
 	static const std::set<std::string> _acceptedMethods;
 	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
-	int _error_code;
+	int _statusCode;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -64,6 +64,9 @@ private:
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
 	void _parseBody(const std::string &bodyLines);
+
+	// execute
+	void _executeMethod();
 };
 
 #endif // HTTPREQUEST_HPP

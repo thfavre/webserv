@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include "../request/HTTPRequest.hpp"
 #include "../Configuration/ConfigParse.hpp"
-
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
 #define RED "\033[31m"

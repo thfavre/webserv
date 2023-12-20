@@ -8,10 +8,10 @@ COLOR_ORANGE = \033[1;38;5;208m
 
 # Compiler settings
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror #-std=c++98
 
 # Source files
-SOURCES = srcs/webserv.cpp $(wildcard srcs/request/*.cpp) $(wildcard srcs/server/*.cpp) $(wildcard srcs/Configuration/*.cpp)
+SOURCES = srcs/webserv.cpp $(wildcard srcs/request/*.cpp) $(wildcard srcs/server/*.cpp) $(wildcard srcs/Configuration/*.cpp) $(wildcard srcs/response/*.cpp)
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
