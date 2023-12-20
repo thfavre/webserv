@@ -10,6 +10,7 @@
 #include <poll.h>
 #include <fcntl.h>
 #include "../request/HTTPRequest.hpp"
+#include "../response/Response.hpp"
 #include "../Configuration/ConfigParse.hpp"
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
