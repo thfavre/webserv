@@ -111,8 +111,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	{
 		_statusCode = 400;
 		throw HTTPRequest::InvalidRequestException("Missing request line");
-	}
-
+  }
 	std::string requestLine = requestHeaderLines[0];
 	std::string headersWithoutRequestLine = "";
 	if (requestHeaderLines.size() == 2)

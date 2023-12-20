@@ -31,5 +31,5 @@
 *.out
 *.app
 
-# Vscode
-.vscode
+# vscode
+.vscode/settings.json
