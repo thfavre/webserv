@@ -72,8 +72,12 @@
 		"unordered_map": "cpp",
 		"variant": "cpp",
 		"vector": "cpp",
-		"algorithm": "cpp"
-		"utility": "cpp",
-		"set": "cpp"
+		"set": "cpp",
+		"__verbose_abort": "cpp",
+		"charconv": "cpp",
+		"clocale": "cpp",
+		"variant": "cpp",
+		"fstream": "cpp",
+		"iomanip": "cpp"
 	}
 }

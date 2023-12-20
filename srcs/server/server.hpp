@@ -8,41 +8,47 @@
 // #include <map>
 // #include <vector>
 #include <poll.h>
+#include <fcntl.h>
 #include "../request/HTTPRequest.hpp"
 #include "../Configuration/ConfigParse.hpp"
-
-#define MAX_FDS 200
-
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
+#define MAX_CONNECTION 50
+#define MAX_REQUEST_SIZE 1000
+#define WAITING 0
+#define UNSET -1
+#define NO_SIGNAL -1
+
 class Server
 {
 	int						_listening_socket;
-	std::vector<t_server>	_configs;
+	t_server				_server;
 	sockaddr_in				_sockaddr;
-	pollfd					_fds[MAX_FDS];
+	pollfd					_fds[MAX_CONNECTION];
 
 
 	public:
 		Server();
+		Server(const t_server &server);
 		~Server();
 		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
 
-		void	setup(const t_server &config);
-		void	handle_request(std::string const &request_raw);
-		void	accept_connection();
-		void	read_data(pollfd fd);
-		void	send_response(pollfd fd);
+		void	setup();
+		void	acceptClient(const int &index);
+		void	handleRequest(const int &index);
+		void	sendResponse(const int &index);
 		void	run();
-		void	close(int connection);
+		void	closeSingle(const int &index);
+		void	closeAll();
 		void	end();
 
-		void	setConfigs(std::vector<t_server> &configs);
+		// int		getPollSig();
+		int		availableFd();
 };
 
 #endif
