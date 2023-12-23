@@ -57,12 +57,9 @@ void	Server::setup()
 		return ;
 	}
 
-	int flags = fcntl(this->_listening_socket, F_GETFL);
-	flags |= O_NONBLOCK;
 
-	if (fcntl(this->_listening_socket, F_SETFL, flags) < 0) {
+	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0)
 		perror("fcntl() error");
-	}
 
 	for (int i = 0; i <= MAX_CONNECTION; i++)
 	{
@@ -223,6 +220,15 @@ void	Server::end()
 }
 
 
+void	Server::setPid(int pid)
+{
+	this->_pid = pid;
+}
+
+int		Server::getPid()
+{
+	return this->_pid;
+}
 
 
 

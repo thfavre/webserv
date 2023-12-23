@@ -27,6 +27,7 @@
 class Server
 {
 	int						_listening_socket;
+	int						_pid;
 	t_server				_server;
 	sockaddr_in				_sockaddr;
 	pollfd					_fds[MAX_CONNECTION];
@@ -50,6 +51,8 @@ class Server
 
 		// int		getPollSig();
 		int		availableFd();
+		void	setPid(int pid);
+		int		getPid();
 };
 
 #endif

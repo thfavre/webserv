@@ -91,8 +91,8 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	// 	}
 	// }
 	// printf("***END\n\n");
-	std::cout << "**Request :\n"
-			  << requestData << std::endl;
+	// std::cout << "**Request :\n"
+	// 		  << requestData << std::endl;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
 	// add empty body if the body is empty
 	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
