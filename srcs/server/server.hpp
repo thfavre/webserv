@@ -9,6 +9,7 @@
 // #include <vector>
 #include <poll.h>
 #include <fcntl.h>
+#include <cstring>
 #include "../request/HTTPRequest.hpp"
 #include "../response/Response.hpp"
 #include "../Configuration/ConfigParse.hpp"

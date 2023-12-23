@@ -47,7 +47,6 @@
 		"iosfwd": "cpp",
 		"istream": "cpp",
 		"functional": "cpp",
-		"iostream": "cpp",
 		"iterator": "cpp",
 		"limits": "cpp",
 		"locale": "cpp",
@@ -72,12 +71,13 @@
 		"unordered_map": "cpp",
 		"variant": "cpp",
 		"vector": "cpp",
-		"set": "cpp",
 		"__verbose_abort": "cpp",
 		"charconv": "cpp",
-		"clocale": "cpp",
-		"variant": "cpp",
-		"fstream": "cpp",
-		"iomanip": "cpp"
+		"*.tcc": "cpp",
+		"memory_resource": "cpp",
+		"numeric": "cpp",
+		"random": "cpp",
+		"utility": "cpp",
+		"numbers": "cpp"
 	}
 }

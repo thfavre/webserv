@@ -52,6 +52,9 @@ Response::Response(const HTTPRequest &request, int socketFd)
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 
 	_statusCode = request.getStatusCode();
+	// if is cgi
+	// formart cgi response (read the output of the cgi from a pipe)
+	// else
 	std::string response = _formatResponse(request);
 	std::cout << "**Response : \n" << std::endl << response << std::endl;
 	_sendResponse(socketFd, response);
@@ -93,9 +96,9 @@ std::string Response::_setBody(const HTTPRequest &request)
 {
 	std::string body;
 	std::string _root = "./"; // TODO come from config parser
-	_root += request.getPath();
+	std::string path = _root + request.getPath();
 	std::ifstream file;
-	file.open(_root.c_str(), std::ios::in);
+	file.open(path.c_str(), std::ios::in);
 	if (!file.is_open())
 	{
 		std::cerr << "Error opening file" << std::endl;
@@ -138,11 +141,11 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 
 void Response::_sendResponse(int socketFd, const std::string &response)
 {
-	// write(socketFd, _response.c_str(), _response.length());
 	if (send(socketFd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
-		printf("Response sent\n"); // TODO don't use printf
+		std::cout << "Response sent" << std::endl;
 	else
-		printf("Error sending response\n");
+		std::cerr << "Error sending response" << std::endl;
+
 }
 
 bool Response::_isError()

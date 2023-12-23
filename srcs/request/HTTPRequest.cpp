@@ -39,7 +39,13 @@ HTTPRequest::HTTPRequest(const std::string &requestData)
 	try
 	{
 		_parseRequest(requestData);
-		_executeMethod();
+		if (_statusCode != 0)
+			return;
+
+		if (getIsCGI())
+			_exectuteCGI();
+		else
+			_executeMethod();
 	}
 	catch (InvalidRequestException &e)
 	{
@@ -144,6 +150,9 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	_parseMethod(requestMethod);
 	_parsePath(requestPath);
 	_parseHttpProtocolVersion(httpProtocolVersion);
+	// CGI
+	_defineIfCGI(requestPath);
+
 }
 
 void HTTPRequest::_parseMethod(const std::string &method)
@@ -213,6 +222,21 @@ void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersi
 	_httpProtocolVersion = httpProtocolVersion;
 }
 
+void HTTPRequest::_defineIfCGI(const std::string &path)
+{
+	std::string::size_type dotIndex = path.find_last_of('.');
+	if (dotIndex == std::string::npos)
+	{
+		_isCGI = false;
+		return;
+	}
+	std::string extension = path.substr(dotIndex + 1);
+	if (extension == "php")
+		_isCGI = true;
+	else
+		_isCGI = false;
+}
+
 void HTTPRequest::_parseHeaders(const std::string &headersLines)
 {
 	std::vector<std::string> headersLinesVector = split(headersLines, std::string(LINE_END));
@@ -252,24 +276,48 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	_body = bodyLines;
 }
 
+
+
 void HTTPRequest::_executeMethod()
 {
-	if (_statusCode != 0)
-	{
-		return;
-	}
 	_statusCode = 200;
+	std::string _root = "./"; // TODO come from config parser
+	std::string path = _root + _requestPath;
+
+
+	// if (_requestMethod == "GET")
+	// {
+	// 	// get resource
+	// 	// Check if file exists
+	// 	if (!checkFileExists(path))
+	// 	{
+	// 		// File does not exist, respond with 404 Not Found
+	// 		_statusCode = 404; // Not Found
+	// 		return;
+	// 	}
+	// 	// Read file
+	// 	std::ifstream file;
+	// 	file.open(path.c_str(), std::ios::in);
+	// 	if (!file.is_open())
+	// 	{
+	// 		_statusCode = 500; // Internal Server Error
+	// 		return;
+	// 	}
+	// 	std::string line;
+	// 	while (std::getline(file, line))
+	// 		_body += line;
+	// 	file.close();
+	// }
+	// else
+
 	if (_requestMethod == "GET")
 	{
 	}
 	else if (_requestMethod == "POST")
 	{
 		// create resource
-		std::string _root = "./"; // TODO come from config parser
-		_root += _requestPath;
-
 		// Check if file already exists
-		if (checkFileExists(_root))
+		if (checkFileExists(path))
 		{
 			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
@@ -277,7 +325,7 @@ void HTTPRequest::_executeMethod()
 		}
 		// Create file
 		std::ofstream file;
-		file.open(_root.c_str(), std::ios::out);
+		file.open(path.c_str(), std::ios::out);
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
@@ -290,15 +338,13 @@ void HTTPRequest::_executeMethod()
 	else if (_requestMethod == "DELETE")
 	{
 		// delete resource
-		std::string _root = "./"; // TODO come from config parser
-		_root += _requestPath;
-		if (!checkFileExists(_root))
+		if (!checkFileExists(path))
 		{
 			// File does not exist, respond with 404 Not Found
 			_statusCode = 404; // Not Found
 			return;
 		}
-		if (remove(_root.c_str()) != 0)
+		if (remove(path.c_str()) != 0)
 		{
 			// Error deleting file, respond with 500 Internal Server Error
 			_statusCode = 500; // Internal Server Error
@@ -306,6 +352,11 @@ void HTTPRequest::_executeMethod()
 		}
 		_statusCode = 200; // OK
 	}
+}
+
+void HTTPRequest::_exectuteCGI()
+{
+	// TODO
 }
 
 /* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)
@@ -346,6 +397,11 @@ const std::string &HTTPRequest::getBody() const
 const int &HTTPRequest::getStatusCode() const
 {
 	return (_statusCode);
+}
+
+const bool &HTTPRequest::getIsCGI() const
+{
+	return _isCGI;
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)

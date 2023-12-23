@@ -19,6 +19,7 @@ public:
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
 	const int &getStatusCode() const;
+	const bool &getIsCGI() const;
 	// bool isError() const;
 
 	class InvalidRequestException : public std::exception
@@ -46,6 +47,7 @@ private:
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
+	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
 
@@ -63,10 +65,12 @@ private:
 	bool _isSafePath(const std::string &path);
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
+	void _defineIfCGI(const std::string &path);
 	void _parseBody(const std::string &bodyLines);
 
 	// execute
 	void _executeMethod();
+	void _exectuteCGI();
 };
 
 #endif // HTTPREQUEST_HPP
