@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "CGIHandler.hpp"
 
 #define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
 
@@ -20,6 +21,8 @@ public:
 	const std::string &getBody() const;
 	const int &getStatusCode() const;
 	// bool isError() const;
+	bool isCGI() const;
+	// CGIHandler &getCGIHandler();
 
 	class InvalidRequestException : public std::exception
 	{
@@ -46,6 +49,7 @@ private:
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
+	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
 
@@ -67,6 +71,7 @@ private:
 
 	// execute
 	void _executeMethod();
+	void _exectuteCGI();
 };
 
 #endif // HTTPREQUEST_HPP

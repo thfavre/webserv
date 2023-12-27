@@ -42,6 +42,7 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 	_statusCodes[500] = "Internal Server Error";
 	_statusCodes[501] = "Not Implemented";
 	_statusCodes[505] = "HTTP Version Not Supported";
+	_statusCodes[508] = "Infinite Loop Detected";
 	if (_statusCodes.find(statusCode) == _statusCodes.end())
 		return ("Unknown Status Code");
 	return (_statusCodes[statusCode]);
@@ -52,12 +53,15 @@ Response::Response(const HTTPRequest &request, int socketFd)
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 
 	_statusCode = request.getStatusCode();
+	// if is cgi
+	// formart cgi response (read the output of the cgi from a pipe)
+	// else
 	std::string response = _formatResponse(request);
-	std::cout << "**Response : \n" << std::endl << response << std::endl;
+	std::cout << "**Response : \n"
+			  << std::endl
+			  << response << std::endl;
 	_sendResponse(socketFd, response);
 }
-
-
 
 std::string Response::_formatResponse(const HTTPRequest &request)
 {
@@ -72,7 +76,6 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 		body = "<html><body><h1>Error Code : " + std::to_string(_statusCode) + " (" + getStatusCodeMessage(_statusCode) + ")" + " </h1></body></html>";
 		// manageErrorResponses();
 		std::cout << "Error body : " << body << std::endl;
-
 	}
 	else
 	{
@@ -92,21 +95,48 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 std::string Response::_setBody(const HTTPRequest &request)
 {
 	std::string body;
-	std::string _root = "./"; // TODO come from config parser
-	_root += request.getPath();
-	std::ifstream file;
-	file.open(_root.c_str(), std::ios::in);
-	if (!file.is_open())
+
+	// if cgi
+	if (request.isCGI())
 	{
-		std::cerr << "Error opening file" << std::endl;
-		_statusCode = 404; // Not Found
-		return ("");
+		// TODO
+		CGIHandler cgiHandler = CGIHandler(request.getPath());
+		if (cgiHandler.executeScript())
+		{
+			_statusCode = 200; // OK
+			return (cgiHandler.getOutput());
+		}
+		else if (cgiHandler.isInfLoop())
+		{
+			_statusCode = 508; // Internal Server Error
+			return ("");
+		}
+		else
+		{
+			_statusCode = 500; // Internal Server Error
+			return ("");
+		}
 	}
-	std::string line;
-	while (std::getline(file, line))
-		body += line;
-	file.close();
-	return (body);
+
+	else
+	{
+		std::string _root = "./"; // TODO come from config parser
+		std::string path = _root + request.getPath();
+		std::cout << "path : " << path << std::endl;
+		std::ifstream file;
+		file.open(path.c_str(), std::ios::in);
+		if (!file.is_open())
+		{
+			std::cerr << "Error opening file" << std::endl;
+			_statusCode = 404; // Not Found
+			return ("");
+		}
+		std::string line;
+		while (std::getline(file, line))
+			body += line;
+		file.close();
+		return (body);
+	}
 }
 
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
@@ -138,11 +168,10 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 
 void Response::_sendResponse(int socketFd, const std::string &response)
 {
-	// write(socketFd, _response.c_str(), _response.length());
 	if (send(socketFd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
-		printf("Response sent\n"); // TODO don't use printf
+		std::cout << "Response sent" << std::endl;
 	else
-		printf("Error sending response\n");
+		std::cerr << "Error sending response" << std::endl;
 }
 
 bool Response::_isError()
