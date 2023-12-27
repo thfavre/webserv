@@ -2,11 +2,14 @@
 # define SERVERMANAGER_CPP
 
 #include "server.hpp"
+#include "../exception/exceptions.hpp"
+
 
 class ServerManager
 {
 	std::vector<t_server>	_serverConfigs;
 	std::vector<Server>		_servers;
+	std::vector<int>		_childPids;
 	ServerManager();
 
 	public:

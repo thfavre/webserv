@@ -58,8 +58,8 @@ void	Server::setup()
 	}
 
 
-	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0)
-		perror("fcntl() error");
+	// if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0)
+	// 	perror("fcntl() error");
 
 	for (int i = 0; i <= MAX_CONNECTION; i++)
 	{

@@ -35,15 +35,16 @@ void	ServerManager::launchServers()
 		int pid = fork();
 		if (pid == 0) {
 			// Child process
-			server.setPid(pid);
 			server.run();
 			return;
 		} else if (pid < 0) {
-			perror("fork() failed");
+			perror("issue with the forking");
+			//throw MyException(ErrorType::FORK, "issue when forking the server at creation");
 			return;
 		} else {
 			// Parent process
-			_servers.push_back(server);
+			_childPids.push_back(pid);
+			_servers.push_back(std::move(server));
 		}
 	}
 
