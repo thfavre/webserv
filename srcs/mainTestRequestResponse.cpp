@@ -119,13 +119,14 @@ void httpRequestTest()
 									"Cache-Control: max-age=0\r\n"
 									"\r\n";
 
-	HTTPRequest request(deleteRequestData);
+	HTTPRequest request(getRequestData);
 
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
+	std::cout << BOLD << "Request status code:" << request.getStatusCode() << RESET << std::endl;
 	if (request.getStatusCode() >= 200 && request.getStatusCode() < 300)
 	{
 		std::cout << YELLOW << "Request Infos:" << RESET << std::endl;
@@ -134,6 +135,7 @@ void httpRequestTest()
 		std::cout << YELLOW << "Get individual:" << RESET << std::endl;
 		std::cout << "request.getHttpProtocolVersion(): " << request.getHttpProtocolVersion() << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << request.getHeader("Host") << std::endl;
+		std::cout << "request.isCGI(): " << request.isCGI() << std::endl;
 	}
 	else
 	{

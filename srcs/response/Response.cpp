@@ -95,6 +95,11 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 std::string Response::_setBody(const HTTPRequest &request)
 {
 	std::string body;
+
+	// if cgi
+	if (request.isCGI())
+
+
 	std::string _root = "./"; // TODO come from config parser
 	std::string path = _root + request.getPath();
 	std::ifstream file;

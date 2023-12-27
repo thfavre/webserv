@@ -19,7 +19,6 @@ public:
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
 	const int &getStatusCode() const;
-	const bool &getIsCGI() const;
 	// bool isError() const;
 
 	class InvalidRequestException : public std::exception
@@ -65,7 +64,6 @@ private:
 	bool _isSafePath(const std::string &path);
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
-	void _defineIfCGI(const std::string &path);
 	void _parseBody(const std::string &bodyLines);
 
 	// execute

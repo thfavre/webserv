@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "HTTPRequest.hpp"
+#include "CGIHandler.hpp"
 #include "split.hpp"
 #include "checkFileExists.hpp"
 
@@ -32,18 +33,21 @@ const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
 
 const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
-HTTPRequest::HTTPRequest(const std::string &requestData)
+HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCGI(false)
 {
-	_statusCode = 0;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	try
 	{
 		_parseRequest(requestData);
 		if (_statusCode != 0)
 			return;
-
-		if (getIsCGI())
-			_exectuteCGI();
+		_statusCode = 200;
+		CGIHandler cgiHandler(_requestPath);
+		if (cgiHandler.isCGI())
+		{
+			_isCGI = true;
+			cgiHandler.executeScript();
+		}
 		else
 			_executeMethod();
 	}
@@ -150,9 +154,6 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	_parseMethod(requestMethod);
 	_parsePath(requestPath);
 	_parseHttpProtocolVersion(httpProtocolVersion);
-	// CGI
-	_defineIfCGI(requestPath);
-
 }
 
 void HTTPRequest::_parseMethod(const std::string &method)
@@ -222,21 +223,6 @@ void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersi
 	_httpProtocolVersion = httpProtocolVersion;
 }
 
-void HTTPRequest::_defineIfCGI(const std::string &path)
-{
-	std::string::size_type dotIndex = path.find_last_of('.');
-	if (dotIndex == std::string::npos)
-	{
-		_isCGI = false;
-		return;
-	}
-	std::string extension = path.substr(dotIndex + 1);
-	if (extension == "php")
-		_isCGI = true;
-	else
-		_isCGI = false;
-}
-
 void HTTPRequest::_parseHeaders(const std::string &headersLines)
 {
 	std::vector<std::string> headersLinesVector = split(headersLines, std::string(LINE_END));
@@ -280,7 +266,6 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 
 void HTTPRequest::_executeMethod()
 {
-	_statusCode = 200;
 	std::string _root = "./"; // TODO come from config parser
 	std::string path = _root + _requestPath;
 
@@ -397,11 +382,6 @@ const std::string &HTTPRequest::getBody() const
 const int &HTTPRequest::getStatusCode() const
 {
 	return (_statusCode);
-}
-
-const bool &HTTPRequest::getIsCGI() const
-{
-	return _isCGI;
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
