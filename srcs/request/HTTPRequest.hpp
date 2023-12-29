@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include "CGIHandler.hpp"
 
 #define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
 
@@ -20,6 +21,8 @@ public:
 	const std::string &getBody() const;
 	const int &getStatusCode() const;
 	// bool isError() const;
+	bool isCGI() const;
+	// CGIHandler &getCGIHandler();
 
 	class InvalidRequestException : public std::exception
 	{

@@ -42,12 +42,9 @@ HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCG
 		if (_statusCode != 0)
 			return;
 		_statusCode = 200;
-		CGIHandler cgiHandler(_requestPath);
-		if (cgiHandler.isCGI())
-		{
+		;
+		if (CGIHandler(_requestPath).isCGI())
 			_isCGI = true;
-			cgiHandler.executeScript();
-		}
 		else
 			_executeMethod();
 	}
@@ -339,10 +336,10 @@ void HTTPRequest::_executeMethod()
 	}
 }
 
-void HTTPRequest::_exectuteCGI()
-{
-	// TODO
-}
+// void HTTPRequest::_exectuteCGI()
+// {
+// 	// TODO
+// }
 
 /* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)
 const std::string &HTTPRequest::getMethod() const
@@ -382,6 +379,11 @@ const std::string &HTTPRequest::getBody() const
 const int &HTTPRequest::getStatusCode() const
 {
 	return (_statusCode);
+}
+
+bool HTTPRequest::isCGI() const
+{
+	return (_isCGI);
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)

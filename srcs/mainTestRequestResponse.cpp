@@ -7,8 +7,8 @@ void webservTest();
 
 int main()
 {
-	httpRequestTest();
-	// webservTest();
+	// httpRequestTest();
+	webservTest();
 }
 #include <netinet/in.h>
 #include <stdio.h>
@@ -118,8 +118,18 @@ void httpRequestTest()
 									"Upgrade-Insecure-Requests: 1\r\n"
 									"Cache-Control: max-age=0\r\n"
 									"\r\n";
+	std::string cgiRequestData = "GET /testCGI.py HTTP/1.1\r\n"
+								 "Host: www.google.com\r\n"
+								 "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0\r\n"
+								 "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n"
+								 "Accept-Language: en-US,en;q=0.5\r\n"
+								 "Accept-Encoding: gzip, deflate, br\r\n"
+								 "Connection: keep-alive\r\n"
+								 "Upgrade-Insecure-Requests: 1\r\n"
+								 "Cache-Control: max-age=0\r\n"
+								 "\r\n";
 
-	HTTPRequest request(getRequestData);
+	HTTPRequest request(cgiRequestData);
 
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
@@ -136,6 +146,10 @@ void httpRequestTest()
 		std::cout << "request.getHttpProtocolVersion(): " << request.getHttpProtocolVersion() << std::endl;
 		std::cout << "request.getHeader(\"Host\"): " << request.getHeader("Host") << std::endl;
 		std::cout << "request.isCGI(): " << request.isCGI() << std::endl;
+
+		// response
+		std::cout << std::endl << YELLOW << "Response:" << RESET << std::endl;
+		Response response(request, 1);
 	}
 	else
 	{
