@@ -5,6 +5,7 @@
 #include <set>
 #include <vector>
 #include "CGIHandler.hpp"
+#include "../Configuration/ConfigParse.hpp"
 
 #define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
 
@@ -12,7 +13,7 @@ class HTTPRequest
 {
 public:
 	// HTTPRequest();
-	HTTPRequest(const std::string &requestData);
+	HTTPRequest(const std::string &requestData, const t_server &server);
 	friend std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request);
 	const std::string &getMethod() const;
 	const std::string &getPath() const;
@@ -44,12 +45,13 @@ private:
 	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
 	int _statusCode;
+	bool _isCGI;
+	t_server _server;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
-	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
 

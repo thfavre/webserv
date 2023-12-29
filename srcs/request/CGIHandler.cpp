@@ -71,7 +71,7 @@ bool CGIHandler::executeScript() const
 		argv[1] = path;
 		argv[2] = NULL;
 		std::cerr << "path: " << path << std::endl;
-		std::cerr << "argv[0]: " << argv[0] << std::endl;
+		std::cerr << "argv[0 ]: " << argv[0] << std::endl;
 		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
 		perror("execve");
 		exit(EXIT_FAILURE);
@@ -83,7 +83,7 @@ bool CGIHandler::executeScript() const
 		time_t start = time(NULL);
 
 		pid_t wpid;
-		while ((wpid = waitpid(pid, NULL, 0)) <= 0)
+		while ((wpid = waitpid(pid, NULL, WNOHANG)) <= 0)
 		{
 			if (wpid == -1)
 			{
@@ -138,7 +138,7 @@ bool CGIHandler::isInfLoop() const
 	return _isInfLoop;
 }
 
-std::string CGIHandler::getOutput() const
+std::string CGIHandler::getScriptExecutionOutput() const
 {
 	return _output;
 }

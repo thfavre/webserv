@@ -48,7 +48,7 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 	return (_statusCodes[statusCode]);
 }
 
-Response::Response(const HTTPRequest &request, int socketFd)
+Response::Response(const HTTPRequest &request, int socketFd, const t_server &server) : _server(server)
 {
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 
@@ -99,12 +99,11 @@ std::string Response::_setBody(const HTTPRequest &request)
 	// if cgi
 	if (request.isCGI())
 	{
-		// TODO
 		CGIHandler cgiHandler = CGIHandler(request.getPath());
 		if (cgiHandler.executeScript())
 		{
 			_statusCode = 200; // OK
-			return (cgiHandler.getOutput());
+			return (cgiHandler.getScriptExecutionOutput());
 		}
 		else if (cgiHandler.isInfLoop())
 		{
@@ -169,14 +168,17 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 void Response::_sendResponse(int socketFd, const std::string &response)
 {
 	if (send(socketFd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
+	{
 		std::cout << "Response sent" << std::endl;
+		// if connexion close -> close socket ?
+	}
 	else
 		std::cerr << "Error sending response" << std::endl;
 }
 
 bool Response::_isError()
 {
-	if (_statusCode < 200 || _statusCode >= 300)
+	if (_statusCode < 200 || _statusCode >= 301) // 301 is not an error
 		return true;
 	return false;
 }

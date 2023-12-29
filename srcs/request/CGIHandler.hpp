@@ -12,7 +12,7 @@ class CGIHandler
 		bool executeScript() const;
 		bool isInfLoop() const;
 		bool isCGI() const;
-		std::string getOutput() const;
+		std::string getScriptExecutionOutput() const;
 
 		CGIHandler &operator=(const CGIHandler &other);
 

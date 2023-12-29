@@ -32,6 +32,8 @@ print('</li>')
 print('<li class="nav-item">')
 print('<a class="nav-link" href="../cgi.html">CGI</a>')
 print('</li>')
+while(1):
+    pass
 print('</ul>')
 print('</nav>')
 print("</head><body>")

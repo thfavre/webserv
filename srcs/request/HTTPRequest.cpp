@@ -33,7 +33,7 @@ const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
 
 const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
-HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCGI(false)
+HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _isCGI(false), _server(server)
 {
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	try
@@ -42,7 +42,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCG
 		if (_statusCode != 0)
 			return;
 		_statusCode = 200;
-		;
 		if (CGIHandler(_requestPath).isCGI())
 			_isCGI = true;
 		else
@@ -256,6 +255,11 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 
 void HTTPRequest::_parseBody(const std::string &bodyLines)
 {
+	if (bodyLines.length() > _server.client_max_body_size)
+	{
+		_statusCode = 413;
+		throw HTTPRequest::InvalidRequestException("Body too long");
+	}
 	_body = bodyLines;
 }
 
