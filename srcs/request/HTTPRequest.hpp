@@ -64,7 +64,8 @@ private:
 	void _parseHeaders(const std::string &headersLines);
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
-	void _parsePath(const std::string &path);
+	void _parsePath(std::string path);
+	const std::string _getRedirectedPath(const std::string &path);
 	bool _areAllPathCharactersValid(const std::string &path);
 	bool _isSafePath(const std::string &path);
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);

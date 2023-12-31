@@ -154,6 +154,7 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 
 void HTTPRequest::_parseMethod(const std::string &method)
 {
+	// TODO check if method is valid with config
 	if (method.empty() || _acceptedMethods.find(method) == _acceptedMethods.end())
 	{
 		_statusCode = 501;
@@ -184,8 +185,12 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 	return path.length() <= maxLength;
 }
 
-void HTTPRequest::_parsePath(const std::string &path)
+void HTTPRequest::_parsePath(std::string path)
 {
+	// if (path.back() == '/')
+	// 	path.pop_back();
+	// TODO check redirections
+	path = _getRedirectedPath(path);
 	if (path.empty())
 	{
 		_statusCode = 400;
@@ -207,6 +212,40 @@ void HTTPRequest::_parsePath(const std::string &path)
 		throw HTTPRequest::InvalidRequestException("Path '" + path + "' too long");
 	}
 	_requestPath = path;
+}
+
+const std::string HTTPRequest::_getRedirectedPath(const std::string &path)
+{
+	std::string redirection = path;
+	std::cout << "path: " << path << std::endl;
+	// for root in config_roots
+	// 	if (path == root.path)
+	// 		redirection = root.redirection;
+
+	// iterate in std::map<std::string, std::map<std::string, std::string> >	routes;
+	for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
+		 route != _server.routes.end(); ++route)
+	{
+		std::cout << "route->first: " << route->first << std::endl;
+		if (path == route->first)
+		{
+			for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
+				 option != route->second.end(); ++option)
+			{
+				std::cout << "option->first: " << option->first << std::endl;
+				if (option->first == "redirection")
+				{
+					std::cout << "option->second: " << option->second << std::endl;
+					redirection = option->second;
+					_statusCode = 301;
+					break;
+				}
+			}
+		}
+	}
+	// if (redirection == "/")
+	// 	redirection = "/index.html"; // TODO come from config parser
+	return (redirection);
 }
 
 void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersion)

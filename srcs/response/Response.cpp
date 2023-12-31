@@ -58,7 +58,6 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	// else
 	std::string response = _formatResponse(request);
 	std::cout << "**Response : \n"
-			  << std::endl
 			  << response << std::endl;
 	_sendResponse(socketFd, response);
 }
@@ -119,6 +118,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 
 	else
 	{
+		// return ("");
 		std::string _root = "./"; // TODO come from config parser
 		std::string path = _root + request.getPath();
 		std::cout << "path : " << path << std::endl;
@@ -130,6 +130,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 			_statusCode = 404; // Not Found
 			return ("");
 		}
+		// std ::cout << "File opened" << file.rdbuf() << std::endl;
 		std::string line;
 		while (std::getline(file, line))
 			body += line;
@@ -142,15 +143,18 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {
 	std::string headers;
 	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
-	headers += "Content-Type: text/html\r\n";
-	if (bodyLength > 0)
-		headers += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
+	headers += "Content-Type: text/html\r\n"; // TODO put the right content type
+	// if (bodyLength > 0)
+	headers += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
 
 	// Connection
-	if (request.getHeader("Connection") == "keep-alive")
-		headers += "Connection: keep-alive\r\n";
-	else
+	if (request.getHeader("Connection") == "close")
 		headers += "Connection: close\r\n";
+	else // TODO or only close if Connection: close in request ?
+		headers += "Connection: keep-alive\r\n";
+	// Location
+	headers += "Location: " + request.getPath() + "\r\n";
+	// TODO
 
 	return (headers);
 }
@@ -178,7 +182,7 @@ void Response::_sendResponse(int socketFd, const std::string &response)
 
 bool Response::_isError()
 {
-	if (_statusCode < 200 || _statusCode >= 301) // 301 is not an error
+	if (_statusCode < 200 || _statusCode > 301) // 301 is not an error
 		return true;
 	return false;
 }
