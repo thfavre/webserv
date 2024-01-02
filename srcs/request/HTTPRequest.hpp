@@ -47,6 +47,7 @@ private:
 	int _statusCode;
 	bool _isCGI;
 	t_server _server;
+	std::map<std::string, std::string> _configRootOptions; //
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -65,6 +66,7 @@ private:
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
 	void _parsePath(std::string path);
+	void _getConfigRootOptions(std::string path);
 	const std::string _getRedirectedPath(const std::string &path);
 	bool _areAllPathCharactersValid(const std::string &path);
 	bool _isSafePath(const std::string &path);

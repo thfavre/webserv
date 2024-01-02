@@ -10,6 +10,12 @@
 
 #define LINE_END "\r\n"
 
+#define YELLOW "\033[33m" // TODO delete
+#define CYAN "\033[36m"
+#define RED "\033[31m"
+#define BOLD "\033[1m"
+#define RESET "\033[0m"
+
 const std::set<std::string> HTTPRequest::_initAcceptedMethods()
 {
 	std::set<std::string> methods;
@@ -117,7 +123,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	{
 		_statusCode = 400;
 		throw HTTPRequest::InvalidRequestException("Missing request line");
-  }
+	}
 	std::string requestLine = requestHeaderLines[0];
 	std::string headersWithoutRequestLine = "";
 	if (requestHeaderLines.size() == 2)
@@ -147,9 +153,10 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	std::getline(requestLineStream, requestPath, ' ');
 	std::getline(requestLineStream, httpProtocolVersion);
 
+	_getConfigRootOptions(requestPath);
+	_parseHttpProtocolVersion(httpProtocolVersion);
 	_parseMethod(requestMethod);
 	_parsePath(requestPath);
-	_parseHttpProtocolVersion(httpProtocolVersion);
 }
 
 void HTTPRequest::_parseMethod(const std::string &method)
@@ -160,7 +167,22 @@ void HTTPRequest::_parseMethod(const std::string &method)
 		_statusCode = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
 	}
-	_requestMethod = method;
+	// print the config methods in color
+	std::cout << YELLOW << "config methods: " << RESET;
+	std::cout << _configRootOptions["methods"] << std::endl;
+	// check if method is allowed by the config
+	// TODO get a getter from config
+	if (_configRootOptions.find("methods") != _configRootOptions.end())
+	{
+		std::vector<std::string> methods = split(_configRootOptions["methods"], " ");
+		if (std::find(methods.begin(), methods.end(), method) != methods.end())
+		{
+			_requestMethod = method;
+			return;
+		}
+	}
+	_statusCode = 405;
+	throw(HTTPRequest::InvalidRequestException("Method '" + method + "'" + " is not allowed by the server config"));
 }
 
 bool HTTPRequest::_areAllPathCharactersValid(const std::string &path)
@@ -189,8 +211,16 @@ void HTTPRequest::_parsePath(std::string path)
 {
 	// if (path.back() == '/')
 	// 	path.pop_back();
+	// _getConfigRootOptions(path);
 	// TODO check redirections
-	path = _getRedirectedPath(path);
+	// path = _getRedirectedPath(path);
+
+	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
+		path = _configRootOptions["root"] + path;
+
+	std::cout << YELLOW << "_configRootOptions['roo1t']: " << _configRootOptions["root1"] << RESET << path << std::endl;
+	std::cout << YELLOW << "path: " << RESET << path << std::endl;
+
 	if (path.empty())
 	{
 		_statusCode = 400;
@@ -214,39 +244,100 @@ void HTTPRequest::_parsePath(std::string path)
 	_requestPath = path;
 }
 
-const std::string HTTPRequest::_getRedirectedPath(const std::string &path)
+void HTTPRequest::_getConfigRootOptions(std::string path) // TODO (Should be a getter in the config) TODO find a better name?
 {
-	std::string redirection = path;
-	std::cout << "path: " << path << std::endl;
-	// for root in config_roots
-	// 	if (path == root.path)
-	// 		redirection = root.redirection;
-
-	// iterate in std::map<std::string, std::map<std::string, std::string> >	routes;
-	for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
-		 route != _server.routes.end(); ++route)
+	std::map<std::string, std::string> options;
+	while (path != "")
 	{
-		std::cout << "route->first: " << route->first << std::endl;
-		if (path == route->first)
+		for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
+			 route != _server.routes.end(); ++route)
 		{
-			for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
-				 option != route->second.end(); ++option)
+			std::cout << "route->first: " << route->first << std::endl;
+			std ::cout << "\tpath: " << path << std::endl;
+			if (path == route->first)
 			{
-				std::cout << "option->first: " << option->first << std::endl;
-				if (option->first == "redirection")
+				options = route->second;
+				std::cout << YELLOW << "options: " << RESET << std::endl;
+				for (std::map<std::string, std::string>::const_iterator option = options.begin();
+					 option != options.end(); ++option)
 				{
-					std::cout << "option->second: " << option->second << std::endl;
-					redirection = option->second;
-					_statusCode = 301;
-					break;
+					std::cout << CYAN << option->first << ": " << RESET << option->second << std::endl;
 				}
+				_configRootOptions = options;
+
+				// ! TODO is root mendaotry ?
+				// if (_configRootOptions.find("root") == _configRootOptions.end())
+				// {
+				// 	_statusCode = 400; // Bad Request
+				// 	throw HTTPRequest::InvalidRequestException("Path (or subpath) does not have a root option");
+				// }
+
+				return;
+				// for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
+				// 	 option != route->second.end(); ++option)
+				// {
+				// 	options[option->first] = option->second;
+				// }
 			}
 		}
+		if (path == "/")
+		{
+			_statusCode = 400; // Bad Request
+			throw HTTPRequest::InvalidRequestException("Path (or subpath) is not in config");
+		}
+		path = path.substr(0, path.find_last_of('/'));
+		if (path.length() == 0)
+			path = "/";
 	}
-	// if (redirection == "/")
-	// 	redirection = "/index.html"; // TODO come from config parser
-	return (redirection);
+	// this code should never be reached
+	_statusCode = 400; // Bad Request
+	throw HTTPRequest::InvalidRequestException("Path or (or subpath) is not in config");
 }
+
+// const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? TODO should be a getter in the config ?
+// {
+
+// 	std::string redirection = path;
+// 	_configRootOptions
+
+// std::string redirection = path;
+// std::cout << "path: " << path << std::endl;
+// // for root in config_roots
+// // 	if (path == root.path)
+// // 		redirection = root.redirection;
+
+// // iterate in std::map<std::string, std::map<std::string, std::string> >	routes;
+// // TODO make a function to do that
+// for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
+// 	 route != _server.routes.end(); ++route)
+// {
+// 	std::cout << "route->first: " << route->first << std::endl;
+// 	if (path == route->first)
+// 	{
+// 		for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
+// 			 option != route->second.end(); ++option)
+// 		{
+// 			std::cout << "option->first: " << option->first << std::endl;
+// 			if (option->first == "redirection")
+// 			{
+// 				std::cout << "redirection option->second: " << option->second << std::endl;
+// 				redirection = option->second;
+// 				_statusCode = 301;
+// 				break;
+// 			}
+// 			if (option->first == "index")
+// 			{
+// 				std::cout << "index option->second: " << option->second << std::endl;
+// 				// redirection = path + "/" + option->second;
+// 				// _statusCode = 301;
+// 				redirection = option->second;
+// 				break;
+// 			}
+// 		}
+// 	}
+// }
+// return (redirection);
+// }
 
 void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersion)
 {
@@ -302,13 +393,10 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	_body = bodyLines;
 }
 
-
-
 void HTTPRequest::_executeMethod()
 {
 	std::string _root = "./"; // TODO come from config parser
 	std::string path = _root + _requestPath;
-
 
 	// if (_requestMethod == "GET")
 	// {

@@ -142,6 +142,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {
 	std::string headers;
+
 	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
 	headers += "Content-Type: text/html\r\n"; // TODO put the right content type
 	// if (bodyLength > 0)
@@ -153,7 +154,8 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 	else // TODO or only close if Connection: close in request ?
 		headers += "Connection: keep-alive\r\n";
 	// Location
-	headers += "Location: " + request.getPath() + "\r\n";
+	if (_statusCode == 301 || _statusCode == 302)
+		headers += "Location: " + request.getPath() + "\r\n";
 	// TODO
 
 	return (headers);
