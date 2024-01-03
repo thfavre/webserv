@@ -46,7 +46,6 @@ private:
 	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
 	int _statusCode;
-	bool _isCGI;
 	std::string _CGIPath;
 	t_server _server;
 	std::map<std::string, std::string> _configRootOptions; //

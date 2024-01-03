@@ -11,7 +11,7 @@
             repertory_listing: true
         - /:
             methods: GET POST
-            root: ./www/site1/
+            root: ./webpage/website1
             repertory_listing: false
             index: index.html
         - /new_user:

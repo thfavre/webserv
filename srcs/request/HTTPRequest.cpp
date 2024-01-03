@@ -39,7 +39,7 @@ const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
 
 const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
-HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _isCGI(false), _server(server)
+HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0),  _server(server), _isCGI(false)
 {
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	try
