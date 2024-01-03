@@ -135,8 +135,8 @@ void	Server::handleRequest(const int &index)
 
 	std::string raw_request(request_buffer, bytes_received);
 	std::cout << "Raw_request: " << raw_request << std::endl;
-	HTTPRequest	request(raw_request);
-	Response response(request, this->_fds[index].fd);
+	HTTPRequest	request(raw_request, _server);
+	Response response(request, this->_fds[index].fd, _server);
 }
 
 void	Server::sendResponse(const int &index)

@@ -9,15 +9,16 @@ class CGIHandler
 {
 	public:
 		CGIHandler(const std::string &path);
-		bool executeScript() const;
+		bool executeScript(std::string CGIPath) const;
 		bool isInfLoop() const;
 		bool isCGI() const;
-		std::string getOutput() const;
+		const std::string getExtension() const;
+		std::string getScriptExecutionOutput() const;
 
 		CGIHandler &operator=(const CGIHandler &other);
 
 	private:
-		CGIHandler(const CGIHandler &other);
+		// CGIHandler(const CGIHandler &other);
 
 		void _parsePath();
 

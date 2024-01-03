@@ -5,6 +5,7 @@
 #include <set>
 #include <vector>
 #include "CGIHandler.hpp"
+#include "../Configuration/ConfigParse.hpp"
 
 #define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
 
@@ -12,7 +13,7 @@ class HTTPRequest
 {
 public:
 	// HTTPRequest();
-	HTTPRequest(const std::string &requestData);
+	HTTPRequest(const std::string &requestData, const t_server &server);
 	friend std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request);
 	const std::string &getMethod() const;
 	const std::string &getPath() const;
@@ -22,6 +23,7 @@ public:
 	const int &getStatusCode() const;
 	// bool isError() const;
 	bool isCGI() const;
+	const std::string getCGIPath() const;
 	// CGIHandler &getCGIHandler();
 
 	class InvalidRequestException : public std::exception
@@ -44,6 +46,10 @@ private:
 	static const std::set<std::string> _acceptedHTTPProtocolVersions;
 
 	int _statusCode;
+	bool _isCGI;
+	std::string _CGIPath;
+	t_server _server;
+	std::map<std::string, std::string> _configRootOptions; //
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -62,7 +68,9 @@ private:
 	void _parseHeaders(const std::string &headersLines);
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
-	void _parsePath(const std::string &path);
+	void _parsePath(std::string path);
+	void _getConfigRootOptions(std::string path);
+	const std::string _getRedirectedPath(const std::string &path);
 	bool _areAllPathCharactersValid(const std::string &path);
 	bool _isSafePath(const std::string &path);
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);

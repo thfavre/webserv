@@ -22,6 +22,11 @@
         - /google:
             redirection: http://www.google.com
             root: ./www/site1/
+        - /thomas:
+          root: ./webpage
+            cgi: .py /usr/bin/python3
+            methods: POST GET
+
 
     - server:
       server_name: site2.com

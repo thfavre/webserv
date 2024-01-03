@@ -31,7 +31,7 @@ void CGIHandler::_parsePath()
 	_extension = _path.substr(dotIndex + 1);
 }
 
-bool CGIHandler::executeScript() const
+bool CGIHandler::executeScript(std::string CGIPath) const
 {
 	int	pid;
 	int	pipefd[2]; // pipefd[0] is for reading, pipefd[1] is for writing
@@ -64,17 +64,17 @@ bool CGIHandler::executeScript() const
 		close(pipefd[1]);
 		// execute script
 		std::string _root = "./"; // TODO come from config parser
-		char *path = (char *)(_root + _path).c_str();
-
 
 		char *argv[] = {};
-		argv[0] = (char*)"/usr/bin/python3"; // ! TODO come from config
-		argv[1] = path;
+		argv[0] = (char*)(CGIPath.c_str());
+		argv[1] = (char*)(_path.c_str());
 		argv[2] = NULL;
-		std::cerr << "path: " << path << std::endl;
-		std::cerr << "argv[0]: " << argv[0] << std::endl;
+		std::cerr << "_path: " << argv[1] << std::endl;
+		std::cerr << "argv[0 ]: " << argv[0] << std::endl;
 		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
 		perror("execve");
+		std::cerr << "execve failed" << std::endl;
+
 		exit(EXIT_FAILURE);
 	}
 	else // parent
@@ -84,7 +84,7 @@ bool CGIHandler::executeScript() const
 		time_t start = time(NULL);
 
 		pid_t wpid;
-		while ((wpid = waitpid(pid, NULL, 0)) <= 0)
+		while ((wpid = waitpid(pid, NULL, WNOHANG)) <= 0)
 		{
 			if (wpid == -1)
 			{
@@ -134,12 +134,17 @@ bool CGIHandler::isCGI() const
 	return false;
 }
 
+const std::string CGIHandler::getExtension() const
+{
+	return _extension;
+}
+
 bool CGIHandler::isInfLoop() const
 {
 	return _isInfLoop;
 }
 
-std::string CGIHandler::getOutput() const
+std::string CGIHandler::getScriptExecutionOutput() const
 {
 	return _output;
 }

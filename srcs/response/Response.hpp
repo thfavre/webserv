@@ -9,12 +9,13 @@
 class Response
 {
 	public:
-		Response(const HTTPRequest &request, int socketFd);
+		Response(const HTTPRequest &request, int socketFd, const t_server &server);
 		// const std::string getResponse() const;
 
 	private:
 		std::string _httpProtocolVersion;
 		int _statusCode;
+		t_server _server;
 		// std::string _statusMessage;
 		// std::map<std::string, std::string> _headers;
 		// std::string _body;

@@ -10,6 +10,12 @@
 
 #define LINE_END "\r\n"
 
+#define YELLOW "\033[33m" // TODO delete
+#define CYAN "\033[36m"
+#define RED "\033[31m"
+#define BOLD "\033[1m"
+#define RESET "\033[0m"
+
 const std::set<std::string> HTTPRequest::_initAcceptedMethods()
 {
 	std::set<std::string> methods;
@@ -33,7 +39,7 @@ const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
 
 const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
-HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCGI(false)
+HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _isCGI(false), _server(server)
 {
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	try
@@ -42,9 +48,41 @@ HTTPRequest::HTTPRequest(const std::string &requestData) : _statusCode(0), _isCG
 		if (_statusCode != 0)
 			return;
 		_statusCode = 200;
-		;
 		if (CGIHandler(_requestPath).isCGI())
-			_isCGI = true;
+		{
+			// TODO put that somewhere else
+			if (_configRootOptions.find("cgi") != _configRootOptions.end())
+			{
+				std::vector<std::string> cgi = split(_configRootOptions["cgi"], " ");
+				if (cgi.size() != 2) // ? TODO Does @Bastien make the check in the config parser ?
+				{
+					_statusCode = 500;
+					throw HTTPRequest::InvalidRequestException("Invalid CGI config");
+				}
+				// if the path have the same extension as the cgi config
+				// remove the .
+				if (cgi[0][0] == '.')
+					cgi[0].erase(0, 1);
+				if (cgi[0] == CGIHandler(_requestPath).getExtension())
+				{
+					_CGIPath = cgi[1];
+					_isCGI = true;
+					std::cout << RED << "CGI" << RESET << std::endl;
+
+				}
+				else
+				{
+					_statusCode = 403;
+					throw HTTPRequest::InvalidRequestException("The CGI need a " + cgi[0] + " extension");
+				}
+			}
+			else
+			{
+				_statusCode = 403;
+				throw HTTPRequest::InvalidRequestException("CGI is not allowed by the server config");
+			}
+
+		}
 		else
 			_executeMethod();
 	}
@@ -118,7 +156,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	{
 		_statusCode = 400;
 		throw HTTPRequest::InvalidRequestException("Missing request line");
-  }
+	}
 	std::string requestLine = requestHeaderLines[0];
 	std::string headersWithoutRequestLine = "";
 	if (requestHeaderLines.size() == 2)
@@ -148,9 +186,10 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 	std::getline(requestLineStream, requestPath, ' ');
 	std::getline(requestLineStream, httpProtocolVersion);
 
+	_getConfigRootOptions(requestPath);
+	_parseHttpProtocolVersion(httpProtocolVersion);
 	_parseMethod(requestMethod);
 	_parsePath(requestPath);
-	_parseHttpProtocolVersion(httpProtocolVersion);
 }
 
 void HTTPRequest::_parseMethod(const std::string &method)
@@ -160,7 +199,22 @@ void HTTPRequest::_parseMethod(const std::string &method)
 		_statusCode = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
 	}
-	_requestMethod = method;
+	// print the config methods in color
+	std::cout << YELLOW << "config methods: " << RESET;
+	std::cout << _configRootOptions["methods"] << std::endl;
+	// check if method is allowed by the config
+	// TODO get a getter from config
+	if (_configRootOptions.find("methods") != _configRootOptions.end())
+	{
+		std::vector<std::string> methods = split(_configRootOptions["methods"], " ");
+		if (std::find(methods.begin(), methods.end(), method) != methods.end())
+		{
+			_requestMethod = method;
+			return;
+		}
+	}
+	_statusCode = 405;
+	throw(HTTPRequest::InvalidRequestException("Method '" + method + "'" + " is not allowed by the server config"));
 }
 
 bool HTTPRequest::_areAllPathCharactersValid(const std::string &path)
@@ -185,8 +239,20 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 	return path.length() <= maxLength;
 }
 
-void HTTPRequest::_parsePath(const std::string &path)
+void HTTPRequest::_parsePath(std::string path)
 {
+	// if (path.back() == '/')
+	// 	path.pop_back();
+	// _getConfigRootOptions(path);
+	// TODO check redirections
+	// path = _getRedirectedPath(path);
+
+	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
+		path = _configRootOptions["root"] + path;
+
+	std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
+	std::cout << YELLOW << "path: " << RESET << path << std::endl;
+
 	if (path.empty())
 	{
 		_statusCode = 400;
@@ -209,6 +275,101 @@ void HTTPRequest::_parsePath(const std::string &path)
 	}
 	_requestPath = path;
 }
+
+void HTTPRequest::_getConfigRootOptions(std::string path) // TODO (Should be a getter in the config) TODO find a better name?
+{
+	std::map<std::string, std::string> options;
+	while (path != "")
+	{
+		for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
+			 route != _server.routes.end(); ++route)
+		{
+			std::cout << "route->first: " << route->first << std::endl;
+			std ::cout << "\tpath: " << path << std::endl;
+			if (path == route->first)
+			{
+				options = route->second;
+				std::cout << YELLOW << "options: " << RESET << std::endl;
+				for (std::map<std::string, std::string>::const_iterator option = options.begin();
+					 option != options.end(); ++option)
+				{
+					std::cout << CYAN << option->first << ": " << RESET << option->second << std::endl;
+				}
+				_configRootOptions = options;
+
+				// ! TODO is root mendaotry ?
+				// if (_configRootOptions.find("root") == _configRootOptions.end())
+				// {
+				// 	_statusCode = 400; // Bad Request
+				// 	throw HTTPRequest::InvalidRequestException("Path (or subpath) does not have a root option");
+				// }
+
+				return;
+				// for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
+				// 	 option != route->second.end(); ++option)
+				// {
+				// 	options[option->first] = option->second;
+				// }
+			}
+		}
+		if (path == "/")
+		{
+			_statusCode = 400; // Bad Request
+			throw HTTPRequest::InvalidRequestException("Path (or subpath) is not in config");
+		}
+		path = path.substr(0, path.find_last_of('/'));
+		if (path.length() == 0)
+			path = "/";
+	}
+	// this code should never be reached
+	_statusCode = 400; // Bad Request
+	throw HTTPRequest::InvalidRequestException("Path or (or subpath) is not in config");
+}
+
+// const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? TODO should be a getter in the config ?
+// {
+
+// 	std::string redirection = path;
+// 	_configRootOptions
+
+// std::string redirection = path;
+// std::cout << "path: " << path << std::endl;
+// // for root in config_roots
+// // 	if (path == root.path)
+// // 		redirection = root.redirection;
+
+// // iterate in std::map<std::string, std::map<std::string, std::string> >	routes;
+// // TODO make a function to do that
+// for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
+// 	 route != _server.routes.end(); ++route)
+// {
+// 	std::cout << "route->first: " << route->first << std::endl;
+// 	if (path == route->first)
+// 	{
+// 		for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
+// 			 option != route->second.end(); ++option)
+// 		{
+// 			std::cout << "option->first: " << option->first << std::endl;
+// 			if (option->first == "redirection")
+// 			{
+// 				std::cout << "redirection option->second: " << option->second << std::endl;
+// 				redirection = option->second;
+// 				_statusCode = 301;
+// 				break;
+// 			}
+// 			if (option->first == "index")
+// 			{
+// 				std::cout << "index option->second: " << option->second << std::endl;
+// 				// redirection = path + "/" + option->second;
+// 				// _statusCode = 301;
+// 				redirection = option->second;
+// 				break;
+// 			}
+// 		}
+// 	}
+// }
+// return (redirection);
+// }
 
 void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersion)
 {
@@ -256,6 +417,11 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 
 void HTTPRequest::_parseBody(const std::string &bodyLines)
 {
+	if (bodyLines.length() > _server.client_max_body_size)
+	{
+		_statusCode = 413;
+		throw HTTPRequest::InvalidRequestException("Body too long");
+	}
 	_body = bodyLines;
 }
 
@@ -263,10 +429,6 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 
 void HTTPRequest::_executeMethod()
 {
-	std::string _root = "./"; // TODO come from config parser
-	std::string path = _root + _requestPath;
-
-
 	// if (_requestMethod == "GET")
 	// {
 	// 	// get resource
@@ -299,7 +461,7 @@ void HTTPRequest::_executeMethod()
 	{
 		// create resource
 		// Check if file already exists
-		if (checkFileExists(path))
+		if (checkFileExists(_requestPath))
 		{
 			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
@@ -307,7 +469,8 @@ void HTTPRequest::_executeMethod()
 		}
 		// Create file
 		std::ofstream file;
-		file.open(path.c_str(), std::ios::out);
+		file.open(_requestPath.c_str(), std::ios::out);
+
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
@@ -320,13 +483,13 @@ void HTTPRequest::_executeMethod()
 	else if (_requestMethod == "DELETE")
 	{
 		// delete resource
-		if (!checkFileExists(path))
+		if (!checkFileExists(_requestPath))
 		{
 			// File does not exist, respond with 404 Not Found
 			_statusCode = 404; // Not Found
 			return;
 		}
-		if (remove(path.c_str()) != 0)
+		if (remove(_requestPath.c_str()) != 0)
 		{
 			// Error deleting file, respond with 500 Internal Server Error
 			_statusCode = 500; // Internal Server Error
@@ -386,6 +549,10 @@ bool HTTPRequest::isCGI() const
 	return (_isCGI);
 }
 
+const std::string HTTPRequest::getCGIPath() const
+{
+	return (_CGIPath);
+}
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
 {
 	// request line
