@@ -3,7 +3,7 @@
 
 #include "server.hpp"
 #include "../exception/exceptions.hpp"
-
+#include <sys/wait.h>
 
 class ServerManager
 {
