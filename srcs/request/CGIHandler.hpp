@@ -18,7 +18,7 @@ class CGIHandler
 		CGIHandler &operator=(const CGIHandler &other);
 
 	private:
-		CGIHandler(const CGIHandler &other);
+		// CGIHandler(const CGIHandler &other);
 
 		void _parsePath();
 
