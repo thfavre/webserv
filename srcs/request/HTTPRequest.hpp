@@ -23,6 +23,7 @@ public:
 	const int &getStatusCode() const;
 	// bool isError() const;
 	bool isCGI() const;
+	const std::string getCGIPath() const;
 	// CGIHandler &getCGIHandler();
 
 	class InvalidRequestException : public std::exception
@@ -46,6 +47,7 @@ private:
 
 	int _statusCode;
 	bool _isCGI;
+	std::string _CGIPath;
 	t_server _server;
 	std::map<std::string, std::string> _configRootOptions; //
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?

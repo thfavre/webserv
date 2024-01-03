@@ -99,7 +99,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 	if (request.isCGI())
 	{
 		CGIHandler cgiHandler = CGIHandler(request.getPath());
-		if (cgiHandler.executeScript())
+		if (cgiHandler.executeScript(request.getCGIPath()))
 		{
 			_statusCode = 200; // OK
 			return (cgiHandler.getScriptExecutionOutput());

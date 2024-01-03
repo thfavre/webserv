@@ -24,8 +24,8 @@
             root: ./www/site1/
         - /thomas:
           root: ./webpage
-            cgi: .py /urs/bin/python
-            methods: POST
+            cgi: .py /usr/bin/python3
+            methods: POST GET
 
 
     - server:

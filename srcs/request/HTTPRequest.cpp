@@ -49,7 +49,40 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 			return;
 		_statusCode = 200;
 		if (CGIHandler(_requestPath).isCGI())
-			_isCGI = true;
+		{
+			// TODO put that somewhere else
+			if (_configRootOptions.find("cgi") != _configRootOptions.end())
+			{
+				std::vector<std::string> cgi = split(_configRootOptions["cgi"], " ");
+				if (cgi.size() != 2) // ? TODO Does @Bastien make the check in the config parser ?
+				{
+					_statusCode = 500;
+					throw HTTPRequest::InvalidRequestException("Invalid CGI config");
+				}
+				// if the path have the same extension as the cgi config
+				// remove the .
+				if (cgi[0][0] == '.')
+					cgi[0].erase(0, 1);
+				if (cgi[0] == CGIHandler(_requestPath).getExtension())
+				{
+					_CGIPath = cgi[1];
+					_isCGI = true;
+					std::cout << RED << "CGI" << RESET << std::endl;
+
+				}
+				else
+				{
+					_statusCode = 403;
+					throw HTTPRequest::InvalidRequestException("The CGI need a " + cgi[0] + " extension");
+				}
+			}
+			else
+			{
+				_statusCode = 403;
+				throw HTTPRequest::InvalidRequestException("CGI is not allowed by the server config");
+			}
+
+		}
 		else
 			_executeMethod();
 	}
@@ -161,7 +194,6 @@ void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO sh
 
 void HTTPRequest::_parseMethod(const std::string &method)
 {
-	// TODO check if method is valid with config
 	if (method.empty() || _acceptedMethods.find(method) == _acceptedMethods.end())
 	{
 		_statusCode = 501;
@@ -218,7 +250,7 @@ void HTTPRequest::_parsePath(std::string path)
 	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
 		path = _configRootOptions["root"] + path;
 
-	std::cout << YELLOW << "_configRootOptions['roo1t']: " << _configRootOptions["root1"] << RESET << path << std::endl;
+	std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
 	std::cout << YELLOW << "path: " << RESET << path << std::endl;
 
 	if (path.empty())
@@ -395,9 +427,6 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 
 void HTTPRequest::_executeMethod()
 {
-	std::string _root = "./"; // TODO come from config parser
-	std::string path = _root + _requestPath;
-
 	// if (_requestMethod == "GET")
 	// {
 	// 	// get resource
@@ -430,7 +459,7 @@ void HTTPRequest::_executeMethod()
 	{
 		// create resource
 		// Check if file already exists
-		if (checkFileExists(path))
+		if (checkFileExists(_requestPath))
 		{
 			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
@@ -438,7 +467,7 @@ void HTTPRequest::_executeMethod()
 		}
 		// Create file
 		std::ofstream file;
-		file.open(path.c_str(), std::ios::out);
+		file.open(_requestPath.c_str(), std::ios::out);
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
@@ -451,13 +480,13 @@ void HTTPRequest::_executeMethod()
 	else if (_requestMethod == "DELETE")
 	{
 		// delete resource
-		if (!checkFileExists(path))
+		if (!checkFileExists(_requestPath))
 		{
 			// File does not exist, respond with 404 Not Found
 			_statusCode = 404; // Not Found
 			return;
 		}
-		if (remove(path.c_str()) != 0)
+		if (remove(_requestPath.c_str()) != 0)
 		{
 			// Error deleting file, respond with 500 Internal Server Error
 			_statusCode = 500; // Internal Server Error
@@ -515,6 +544,11 @@ const int &HTTPRequest::getStatusCode() const
 bool HTTPRequest::isCGI() const
 {
 	return (_isCGI);
+}
+
+const std::string HTTPRequest::getCGIPath() const
+{
+	return (_CGIPath);
 }
 
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
