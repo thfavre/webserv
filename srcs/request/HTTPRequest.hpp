@@ -55,6 +55,7 @@ private:
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
+	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
 

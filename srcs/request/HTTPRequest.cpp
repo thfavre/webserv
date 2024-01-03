@@ -136,8 +136,8 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	// 	}
 	// }
 	// printf("***END\n\n");
-	std::cout << "**Request :\n"
-			  << requestData << std::endl;
+	// std::cout << "**Request :\n"
+	// 		  << requestData << std::endl;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
 	// add empty body if the body is empty
 	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
@@ -425,6 +425,8 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	_body = bodyLines;
 }
 
+
+
 void HTTPRequest::_executeMethod()
 {
 	// if (_requestMethod == "GET")
@@ -468,6 +470,7 @@ void HTTPRequest::_executeMethod()
 		// Create file
 		std::ofstream file;
 		file.open(_requestPath.c_str(), std::ios::out);
+
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
@@ -550,7 +553,6 @@ const std::string HTTPRequest::getCGIPath() const
 {
 	return (_CGIPath);
 }
-
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
 {
 	// request line

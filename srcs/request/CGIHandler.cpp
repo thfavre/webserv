@@ -65,7 +65,6 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		// execute script
 		std::string _root = "./"; // TODO come from config parser
 
-
 		char *argv[] = {};
 		argv[0] = (char*)(CGIPath.c_str());
 		argv[1] = (char*)(_path.c_str());
@@ -75,6 +74,7 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
 		perror("execve");
 		std::cerr << "execve failed" << std::endl;
+
 		exit(EXIT_FAILURE);
 	}
 	else // parent

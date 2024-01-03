@@ -58,6 +58,7 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	// else
 	std::string response = _formatResponse(request);
 	std::cout << "**Response : \n"
+			  << std::endl
 			  << response << std::endl;
 	_sendResponse(socketFd, response);
 }
@@ -118,7 +119,6 @@ std::string Response::_setBody(const HTTPRequest &request)
 
 	else
 	{
-		// return ("");
 		std::string _root = "./"; // TODO come from config parser
 		std::string path = _root + request.getPath();
 		std::cout << "path : " << path << std::endl;
@@ -130,7 +130,6 @@ std::string Response::_setBody(const HTTPRequest &request)
 			_statusCode = 404; // Not Found
 			return ("");
 		}
-		// std ::cout << "File opened" << file.rdbuf() << std::endl;
 		std::string line;
 		while (std::getline(file, line))
 			body += line;
