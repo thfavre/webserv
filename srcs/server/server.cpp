@@ -17,11 +17,6 @@ Server::~Server()
 
 void	Server::setup()
 {
-	/*
-		Need to reset and prepare the _fds[]
-		Need to prepare the listening socket on port (socket(), bind(), listen())
-	*/
-
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == UNSET)
 	{
@@ -58,8 +53,8 @@ void	Server::setup()
 	}
 
 
-	// if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0)
-	// 	perror("fcntl() error");
+	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK | FD_CLOEXEC) < 0)
+		perror("fcntl() error");
 
 	for (int i = 0; i <= MAX_CONNECTION; i++)
 	{
@@ -77,31 +72,57 @@ void	Server::setup()
 	this->_fds[0].events = POLLIN;
 }
 
-void	Server::acceptClient(const int &index)
+void Server::acceptClient(const int &index)
 {
-	/*
-		Check if there is enough place available for new connection
-	*/
-	int available_fd;
+	int			available_fd = availableFd();
 	sockaddr_in	client_addr;
 
-	if ((available_fd = availableFd()) != NO_SIGNAL)
-	{
+	if (available_fd == NO_SIGNAL) { // No more available file descriptors
+		// Close the listening socket
+		perror("No available fd at the moment, closing listening socket");
+		close(this->_fds[index].fd);
+	} else {
+		// Accept the new connection
 		socklen_t	addr_len = sizeof(client_addr);
 		int client_fd = accept(this->_fds[index].fd, (struct sockaddr *)&client_addr, &addr_len);
-		if (client_fd == NO_SIGNAL)
-		{
+		if (client_fd == NO_SIGNAL) { // Socket error
 			this->_fds[available_fd].fd = UNSET;
 			perror("issue accepting signal");
+		} else {
+			std::cout << "accepting client " << available_fd << std::endl;
+			this->_fds[available_fd].fd = client_fd;
+			this->_fds[available_fd].events = POLLIN;
+			this->_fds[available_fd].revents = 0;
 		}
-		std::cout << "accepting client " << available_fd << std::endl;
-		this->_fds[available_fd].fd = client_fd;
-		this->_fds[available_fd].events = POLLIN;
-		this->_fds[available_fd].revents = 0;
 	}
-	else
-		perror ("No available fd at the moment");
 }
+
+
+// void	Server::acceptClient(const int &index)
+// {
+// 	/*
+// 		Check if there is enough place available for new connection
+// 	*/
+// 	int available_fd;
+// 	sockaddr_in	client_addr;
+
+// 	if ((available_fd = availableFd()) != NO_SIGNAL)
+// 	{
+// 		socklen_t	addr_len = sizeof(client_addr);
+// 		int client_fd = accept(this->_fds[index].fd, (struct sockaddr *)&client_addr, &addr_len);
+// 		if (client_fd == NO_SIGNAL)
+// 		{
+// 			this->_fds[available_fd].fd = UNSET;
+// 			perror("issue accepting signal");
+// 		}
+// 		std::cout << "accepting client " << available_fd << std::endl;
+// 		this->_fds[available_fd].fd = client_fd;
+// 		this->_fds[available_fd].events = POLLIN;
+// 		this->_fds[available_fd].revents = 0;
+// 	}
+// 	else
+// 		perror ("No available fd at the moment");
+// }
 
 int		Server::availableFd()
 {
@@ -166,16 +187,8 @@ void	Server::run()
 		if (poll(_fds, MAX_CONNECTION, 1000) < 0)
 			perror("poll() error");
 
-		// if ((sig_index == getPollSig()) == NO_SIGNAL)
-		// 	perror("issue no signal, end server");
-		// std::cout << "poll connection " << this->_fds[0].fd << std::endl;
-
 		for (int i = 0; i < MAX_CONNECTION; i++)
 		{
-			// std::cout << "fd[" << i << "].fd: " << this->_fds[i].fd << std::endl;
-			// std::cout << "fd[" << i << "].events: " << this->_fds[i].events << std::endl;
-			// std::cout << "fd[" << i << "].revents: " << this->_fds[i].revents << std::endl;
-			// std::cout << this->_fds[i].fd << " " << this->_listening_socket << "revents" << this->_fds[i].revents << std::endl;
 			if (_fds[i].fd == UNSET)
 				continue;
 			if (_fds[i].revents & POLLIN)
@@ -198,7 +211,6 @@ void	Server::run()
 
 void	Server::closeSingle(const int &index)
 {
-	//close a single fd and reset it (UNSET, revents and events too)
 	if (this->_fds[index].fd >= 3)
 		close(this->_fds[index].fd);
 	this->_fds[index].fd = UNSET;
@@ -208,7 +220,6 @@ void	Server::closeSingle(const int &index)
 
 void	Server::closeAll()
 {
-	//close every _fds[]
 	for (int i = 0; i < MAX_CONNECTION; i++)
 		closeSingle(i);
 }
@@ -225,7 +236,7 @@ void	Server::setPid(int pid)
 	this->_pid = pid;
 }
 
-int		Server::getPid()
+int		Server::getPid() const
 {
 	return this->_pid;
 }

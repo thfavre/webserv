@@ -27,7 +27,7 @@ void	ServerManager::launchServers()
 {
 	for (std::vector<t_server>::const_iterator it = _serverConfigs.begin(); it != _serverConfigs.end(); ++it)
 	{
-		const t_server& config = *it;
+		const t_server &config = *it;
 
 		Server server(config);
 		server.setup();
@@ -47,6 +47,25 @@ void	ServerManager::launchServers()
 			_servers.push_back(std::move(server));
 		}
 	}
+
+	while (!this->_childPids.empty())
+	{
+		int	pid;
+		int	status;
+
+		if ((pid = waitpid(-1, &status, WNOHANG)) == -1)
+		{
+			perror("waitpid() failed");
+			return ;
+		}
+		if (pid)
+		{
+			std::cout << "Child process " << pid << " terminated with status " << status << std::endl;
+			// const Server& server = *_servers.begin(); // Dereference the iterator
+			_servers.erase(_servers.begin());
+		}
+	}
+
 
 	for (std::vector<Server>::iterator i = _servers.begin(); i != _servers.end();)
 	{

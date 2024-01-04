@@ -55,7 +55,7 @@ class Server
 		// int		getPollSig();
 		int		availableFd();
 		void	setPid(int pid);
-		int		getPid();
+		int		getPid() const;
 };
 
 #endif
