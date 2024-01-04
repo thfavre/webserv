@@ -49,6 +49,7 @@ private:
 	std::string _CGIPath;
 	t_server _server;
 	std::map<std::string, std::string> _configRootOptions; //
+	std::string _configRoot;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1

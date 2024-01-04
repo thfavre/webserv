@@ -70,11 +70,30 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 	std::cout << "Status code : " << _statusCode << std::endl;
 	if (_isError())
 	{
+		// TODO ? put in a function
 		// // _statusMessage = "Not Found";
 		// ! TODO check if the error have a custom error page
+		// check in the config if there is a custom error page for this error
+		if (_server.error_pages.find(_statusCode) != _server.error_pages.end())
+		{
+			std::cout << "Custom error page found" << std::endl;
+			std::string errorPagePath = _server.error_pages[_statusCode];
+			std::ifstream file;
+			file.open(errorPagePath.c_str(), std::ios::in);
+			if (!file.is_open())
+			{
+				std::cerr << "Error opening file '"<< errorPagePath<< "'" << std::endl;
+				_statusCode = 404; // Not Found
+				body = _formatGenericErrorPageHTML();
+			}
+			std::string line;
+			while (std::getline(file, line))
+				body += line;
+			file.close();
+		}
 		// ! TODO if no custom error page, use default error page
-		body = "<html><body><h1>Error Code : " + std::to_string(_statusCode) + " (" + getStatusCodeMessage(_statusCode) + ")" + " </h1></body></html>";
-		// manageErrorResponses();
+		else
+			body = _formatGenericErrorPageHTML();
 		std::cout << "Error body : " << body << std::endl;
 	}
 	else
@@ -90,6 +109,14 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 
 	// format response
 	return headers + "\r\n" + body;
+}
+
+std::string Response::_formatGenericErrorPageHTML()
+{
+	std::string body;
+	body += "<html><body><h1>Error " + std::to_string(_statusCode) + "</h1></body></html>";
+	body += "<p>" + getStatusCodeMessage(_statusCode) + "</p>";
+	return (body);
 }
 
 std::string Response::_setBody(const HTTPRequest &request)
@@ -119,14 +146,13 @@ std::string Response::_setBody(const HTTPRequest &request)
 
 	else
 	{
-		std::string _root = "./"; // TODO come from config parser
-		std::string path = _root + request.getPath();
+		std::string path = request.getPath();
 		std::cout << "path : " << path << std::endl;
 		std::ifstream file;
 		file.open(path.c_str(), std::ios::in);
 		if (!file.is_open())
 		{
-			std::cerr << "Error opening file" << std::endl;
+			std::cerr << "Error opening file '" << path<< "'" << std::endl;
 			_statusCode = 404; // Not Found
 			return ("");
 		}

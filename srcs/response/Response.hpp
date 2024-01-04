@@ -22,6 +22,7 @@ class Response
 		// std::string _response;
 
 		std::string _formatResponse(const HTTPRequest &request);
+		std::string _formatGenericErrorPageHTML();
 		std::string _setBody(const HTTPRequest &request);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
 		std::string _getContentType(const std::string &path);

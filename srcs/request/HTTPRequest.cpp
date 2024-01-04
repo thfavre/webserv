@@ -12,6 +12,7 @@
 
 #define YELLOW "\033[33m" // TODO delete
 #define CYAN "\033[36m"
+#define GREEN "\033[32m"
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
@@ -39,7 +40,7 @@ const std::set<std::string> HTTPRequest::_initAcceptedHTTPProtocolVersions()
 
 const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPRequest::_initAcceptedHTTPProtocolVersions();
 
-HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0),  _server(server), _isCGI(false)
+HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _server(server), _isCGI(false)
 {
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
 	try
@@ -68,7 +69,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 					_CGIPath = cgi[1];
 					_isCGI = true;
 					std::cout << RED << "CGI" << RESET << std::endl;
-
 				}
 				else
 				{
@@ -81,7 +81,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 				_statusCode = 403;
 				throw HTTPRequest::InvalidRequestException("CGI is not allowed by the server config");
 			}
-
 		}
 		else
 			_executeMethod();
@@ -245,12 +244,9 @@ void HTTPRequest::_parsePath(std::string path)
 	// 	path.pop_back();
 	// _getConfigRootOptions(path);
 	// TODO check redirections
-	// path = _getRedirectedPath(path);
+	path = _getRedirectedPath(path);
 
-	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
-		path = _configRootOptions["root"] + path;
-
-	std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
+	// std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
 	std::cout << YELLOW << "path: " << RESET << path << std::endl;
 
 	if (path.empty())
@@ -276,12 +272,12 @@ void HTTPRequest::_parsePath(std::string path)
 	_requestPath = path;
 }
 
-void HTTPRequest::_getConfigRootOptions(std::string path) // TODO (Should be a getter in the config) TODO find a better name?
+void HTTPRequest::_getConfigRootOptions(std::string path) // TODO rename TODO (Should be a getter in the config) TODO find a better name?
 {
 	std::map<std::string, std::string> options;
 	while (path != "")
 	{
-		for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
+		for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
 			 route != _server.routes.end(); ++route)
 		{
 			std::cout << "route->first: " << route->first << std::endl;
@@ -296,6 +292,7 @@ void HTTPRequest::_getConfigRootOptions(std::string path) // TODO (Should be a g
 					std::cout << CYAN << option->first << ": " << RESET << option->second << std::endl;
 				}
 				_configRootOptions = options;
+				_configRoot = path;
 
 				// ! TODO is root mendaotry ?
 				// if (_configRootOptions.find("root") == _configRootOptions.end())
@@ -326,7 +323,38 @@ void HTTPRequest::_getConfigRootOptions(std::string path) // TODO (Should be a g
 	throw HTTPRequest::InvalidRequestException("Path or (or subpath) is not in config");
 }
 
-// const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? TODO should be a getter in the config ?
+const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? TODO should be a getter in the config ?
+{
+	std::string redirection = path;
+	// if the path is a key in the config
+	std::cout << GREEN << "path: " << RESET << path << std::endl;
+	std::cout << GREEN << "_configRoot: " << RESET << _configRoot << std::endl;
+	if (path == _configRoot)
+	{
+		std::cout << GREEN << "path == _configRoot" << RESET << std::endl;
+		if (_configRootOptions.find("redirection") != _configRootOptions.end())
+		{
+			redirection = _configRootOptions["redirection"];
+			_statusCode = 301;
+
+			std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
+			// return (redirection);
+		}
+		else if (_configRootOptions.find("index") != _configRootOptions.end())
+		{
+			redirection = path + "/" + _configRootOptions["index"];
+			std::cout << GREEN << "index: " << RESET << redirection << std::endl;
+		}
+	}
+
+	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
+		redirection = _configRootOptions["root"] + redirection;		 // TODO add / ?
+	std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
+	// ? TODO check if path is too long
+
+	return (redirection);
+}
+
 // {
 
 // 	std::string redirection = path;
@@ -424,8 +452,6 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 	}
 	_body = bodyLines;
 }
-
-
 
 void HTTPRequest::_executeMethod()
 {

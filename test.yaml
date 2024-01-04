@@ -1,13 +1,13 @@
   - server:
       server_name: site1.com
-      port: 9000
+      port: 8888
       client_max_body_size: 200k
       error_pages:
-        - 404: www/errors/404.html
-        - 405: www/errors/405.html
+        - 404: webpage/error_pages/error404.html
+        - 405: webpage/error_pages/error405.html
       routes:
         - /admin:
-            root: ./www/site1/
+            root: ./webpage/website1
             repertory_listing: true
         - /:
             methods: GET POST
@@ -15,15 +15,16 @@
             repertory_listing: false
             index: index.html
         - /new_user:
-            root: ./www/site1/new_user/
-            redirection: /404.html
+            root: ./webpage/website1
+            redirection: /redirection.html
             cgi: .py /urs/bin/python
             repertory_listing: true
+            methods: GET
         - /google:
             redirection: http://www.google.com
             root: ./www/site1/
         - /thomas:
-          root: ./webpage
+          root: ./webpage/thomas
             cgi: .py /usr/bin/python3
             methods: POST GET
 
