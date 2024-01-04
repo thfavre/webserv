@@ -135,8 +135,7 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	// 	}
 	// }
 	// printf("***END\n\n");
-	// std::cout << "**Request :\n"
-	// 		  << requestData << std::endl;
+	std::cout << "**Request :\n" << requestData << std::endl;
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
 	// add empty body if the body is empty
 	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
@@ -292,7 +291,7 @@ void HTTPRequest::_getConfigRootOptions(std::string path) // TODO rename TODO (S
 					std::cout << CYAN << option->first << ": " << RESET << option->second << std::endl;
 				}
 				_configRootOptions = options;
-				_configRoot = path;
+				_configRoute = path;
 
 				// ! TODO is root mendaotry ?
 				// if (_configRootOptions.find("root") == _configRootOptions.end())
@@ -328,10 +327,10 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 	std::string redirection = path;
 	// if the path is a key in the config
 	std::cout << GREEN << "path: " << RESET << path << std::endl;
-	std::cout << GREEN << "_configRoot: " << RESET << _configRoot << std::endl;
-	if (path == _configRoot)
+	std::cout << GREEN << "_configRoute: " << RESET << _configRoute << std::endl;
+	if (path == _configRoute)
 	{
-		std::cout << GREEN << "path == _configRoot" << RESET << std::endl;
+		std::cout << GREEN << "path == _configRoute" << RESET << std::endl;
 		if (_configRootOptions.find("redirection") != _configRootOptions.end())
 		{
 			redirection = _configRootOptions["redirection"];
@@ -347,10 +346,10 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 		}
 	}
 
-	if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
-		redirection = _configRootOptions["root"] + redirection;		 // TODO add / ?
-	std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
-	// ? TODO check if path is too long
+	// if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
+	// 	redirection = _configRootOptions["root"] + redirection;		 // TODO add / ?
+	// std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
+	// // ? TODO check if path is too long
 
 	return (redirection);
 }
@@ -568,6 +567,18 @@ const std::string &HTTPRequest::getBody() const
 const int &HTTPRequest::getStatusCode() const
 {
 	return (_statusCode);
+}
+
+const std::string &HTTPRequest::getRoot() const
+{
+	if (_configRootOptions.find("root") == _configRootOptions.end())
+	{
+		// empty string if root is not in config
+		static const std::string noRootRoot = "./";
+		return (noRootRoot);
+	}
+	const std::string &root = _configRootOptions.at("root");
+	return (root);
 }
 
 bool HTTPRequest::isCGI() const

@@ -16,6 +16,9 @@ class Response
 		std::string _httpProtocolVersion;
 		int _statusCode;
 		t_server _server;
+
+		std::string _contentType;
+		std::string _getContentType(const std::string &path);
 		// std::string _statusMessage;
 		// std::map<std::string, std::string> _headers;
 		// std::string _body;
@@ -25,7 +28,7 @@ class Response
 		std::string _formatGenericErrorPageHTML();
 		std::string _setBody(const HTTPRequest &request);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
-		std::string _getContentType(const std::string &path);
+		// std::string _getContentType(const std::string &path);
 		void _sendResponse(int socketFd, const std::string &response);
 		bool _isError();
 };

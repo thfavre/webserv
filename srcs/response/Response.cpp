@@ -57,14 +57,21 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	// formart cgi response (read the output of the cgi from a pipe)
 	// else
 	std::string response = _formatResponse(request);
-	std::cout << "**Response : \n"
-			  << std::endl
-			  << response << std::endl;
+
+	if (response.length() > 1000)
+		std::cout << "==>Response " << "(first 1000char/"<<response.length()<<")" << ": " << response.substr(0, 500) << "..." << std::endl;
+	else
+		std::cout << "==>Response : " << response << std::endl;
+
+	// std::cout << "**Response : \n"
+	// 		  << std::endl
+	// 		  << response << std::endl;
 	_sendResponse(socketFd, response);
 }
 
 std::string Response::_formatResponse(const HTTPRequest &request)
 {
+	_contentType = _getContentType(request.getPath());
 	// set body
 	std::string body;
 	std::cout << "Status code : " << _statusCode << std::endl;
@@ -111,6 +118,47 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 	return headers + "\r\n" + body;
 }
 
+std::string Response::_getContentType(const std::string &path)
+{
+	std::string::size_type dotIndex = path.find_last_of('.');
+	if (dotIndex == std::string::npos)
+		return ("application/octet-stream"); // TODO check if this is the right default value
+	std::string extension = path.substr(dotIndex + 1);
+	// ? TODO check if this is the right way to do this
+	if (extension == "html")
+		return ("text/html");
+	else if (extension == "css")
+		return ("text/css");
+	else if (extension == "js")
+		return ("text/javascript");
+	else if (extension == "jpg")
+		return ("image/jpeg");
+	else if (extension == "jpeg")
+		return ("image/jpeg");
+	else if (extension == "png")
+		return ("image/png");
+	else if (extension == "gif")
+		return ("image/gif");
+	else if (extension == "svg")
+		return ("image/svg+xml");
+	else if (extension == "ico")
+		return ("image/x-icon");
+	else if (extension == "mp3")
+		return ("audio/mpeg");
+	else if (extension == "mp4")
+		return ("video/mp4");
+	else if (extension == "ttf")
+		return ("font/ttf");
+	else if (extension == "json")
+		return ("application/json");
+	else if (extension == "pdf")
+		return ("application/pdf");
+	else if (extension == "xml")
+		return ("application/xml");
+	else
+		return ("application/octet-stream");
+}
+
 std::string Response::_formatGenericErrorPageHTML()
 {
 	std::string body;
@@ -126,7 +174,8 @@ std::string Response::_setBody(const HTTPRequest &request)
 	// if cgi
 	if (request.isCGI())
 	{
-		CGIHandler cgiHandler = CGIHandler(request.getPath());
+		_contentType = "text/html";
+		CGIHandler cgiHandler = CGIHandler(request.getRoot() + request.getPath());
 		if (cgiHandler.executeScript(request.getCGIPath()))
 		{
 			_statusCode = 200; // OK
@@ -146,7 +195,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 
 	else
 	{
-		std::string path = request.getPath();
+		std::string path = request.getRoot() + request.getPath();
 		std::cout << "path : " << path << std::endl;
 		std::ifstream file;
 		file.open(path.c_str(), std::ios::in);
@@ -169,14 +218,14 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 	std::string headers;
 
 	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
-	headers += "Content-Type: text/html\r\n"; // TODO put the right content type
+	headers += "Content-Type: " +_contentType + "\r\n"; // TODO put the right content type
 	// if (bodyLength > 0)
 	headers += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
 
 	// Connection
 	if (request.getHeader("Connection") == "close")
 		headers += "Connection: close\r\n";
-	else // TODO or only close if Connection: close in request ?
+	else
 		headers += "Connection: keep-alive\r\n";
 	// Location
 	if (_statusCode == 301 || _statusCode == 302)
