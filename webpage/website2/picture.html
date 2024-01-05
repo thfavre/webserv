@@ -21,14 +21,12 @@
 		<main>
 			<section id="download">
 				<h2>Download</h2>
-				<form action="TO DO - SCRIPT CGI" method="get">
-					<button type="submit">Download</button>
-				</form>
+					<a href="../images/InternetGuide.jpeg" download><button type="submit">Download</button></a>
 			</section>
 
 			<section id="upload">
 				<h2>Upload</h2>
-				<form action="TO DO - SCRIPT CGI" method="post" enctype="multipart/form-data">
+				<form action="upload-cgi.py" method="post" enctype="multipart/form-data">
 					<input type="file" name="image" accept="image/*" required>
 					<button type="submit">Upload</button>
 				</form>
@@ -36,11 +34,12 @@
 
 			<section id="delete">
 				<h2>Delete</h2>
-				<form action="TO DO - SCRIPT CGI" method="post">
+				<form action="delete-cgi.py" method="post">
 					<input type="text" name="imageId" placeholder="Image ID" required>
 					<button type="submit">Delete</button>
 				</form>
 			</section>
+
 		</main>
 		<footer>
 			<p> © 2023 My Website - All Rights Reserved </p>
