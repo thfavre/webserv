@@ -55,6 +55,8 @@ void webservTest()
 
 	t_server server = configParse.getServersParsed()[0];
 
+	// starts the servers
+
 
 
 
@@ -73,24 +75,9 @@ void webservTest()
 
 		// parse the request
 		HTTPRequest request(request_buffer, server);
-		// if (request.isError())
-		// {
-		// 	std::cout << "Error parsing request" << std::endl;
-		// 	continue;
-		// }
-		// const char *page_name = request.getPath().c_str();
-
-		// if (strstr(page_name, ".html") != NULL)
-		// {
 		Response response(request, new_socket, server);
 
-		// std::string responseString = response.getResponse();
-		// const char *respond = responseString.c_str();
-
-		// write(new_socket, respond, strlen(respond));
-		// }
 		printf("done\n");
-		// printf("------------------Hello message sent-------------------\n");
 
 		close(new_socket);
 	}

@@ -328,6 +328,8 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 	// if the path is a key in the config
 	std::cout << GREEN << "path: " << RESET << path << std::endl;
 	std::cout << GREEN << "_configRoute: " << RESET << _configRoute << std::endl;
+	// root
+	std::cout << GREEN << "getRoot: " << RESET << getRoot() << std::endl;
 	if (path == _configRoute)
 	{
 		std::cout << GREEN << "path == _configRoute" << RESET << std::endl;
@@ -348,7 +350,7 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 
 	// if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
 	// 	redirection = _configRootOptions["root"] + redirection;		 // TODO add / ?
-	// std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
+	std::cout << GREEN << "new path : " << RESET << redirection << std::endl;
 	// // ? TODO check if path is too long
 
 	return (redirection);
