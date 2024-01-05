@@ -1,16 +1,13 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-// #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstring>
-// #include <map>
-// #include <vector>
-#include <poll.h>
 #include <fcntl.h>
 #include <cstring>
+#include <poll.h>
 #include "../request/HTTPRequest.hpp"
 #include "../response/Response.hpp"
 #include "../Configuration/ConfigParse.hpp"
@@ -29,16 +26,18 @@
 
 class Server
 {
+	std::string				_name;
 	int						_listening_socket;
 	int						_pid;
-	t_server				_server;
+	int						_sockaddr_len;
+	t_server				_server_config;
 	sockaddr_in				_sockaddr;
 	pollfd					_fds[MAX_CONNECTION];
 
 
 	public:
 		Server();
-		Server(const t_server &server);
+		Server(const t_server &server_config);
 		~Server();
 		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
@@ -56,6 +55,8 @@ class Server
 		int		availableFd();
 		void	setPid(int pid);
 		int		getPid();
+		int		getListeningSocket();
+		std::string	getName();
 };
 
 #endif

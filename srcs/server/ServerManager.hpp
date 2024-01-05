@@ -7,9 +7,15 @@
 
 class ServerManager
 {
-	std::vector<t_server>	_serverConfigs;
-	std::vector<Server>		_servers;
-	std::vector<int>		_childPids;
+	struct epfd {
+		pollfd		pfd;
+		std::string	server_name;
+	};
+
+	std::vector<t_server>		_serverConfigs;
+	std::vector<Server>			_servers;
+	std::vector<struct epfd>	_fds;
+
 	ServerManager();
 
 	public:

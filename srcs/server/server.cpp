@@ -5,9 +5,52 @@ Server::Server()
 	memset(&_fds, UNSET, sizeof(_fds));
 }
 
-Server::Server(const t_server &server) : _server(server)
+Server::Server(const t_server &server_config) : _server_config(server_config)
 {
-	memset(&_fds, UNSET, sizeof(_fds));
+	this->_name = this->_server_config.server_name;
+
+	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (this->_listening_socket == UNSET)
+	{
+		throw std::runtime_error("listening socket issue");
+	}
+
+	int on = 1;
+	if (setsockopt(this->_listening_socket, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+	{
+		close(this->_listening_socket);
+		throw std::runtime_error("setsockopt() failed");
+	}
+
+	memset(&this->_sockaddr, 0, sizeof(this->_sockaddr));
+	this->_sockaddr.sin_family = AF_INET;
+	this->_sockaddr.sin_port = htons(this->_server_config.port);
+	this->_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	this->_sockaddr_len = sizeof(this->_sockaddr);
+
+	if (bind(this->_listening_socket, (struct sockaddr *) &this->_sockaddr, this->_sockaddr_len) < 0)
+	{
+		close(this->_listening_socket);
+		throw std::runtime_error("Binding listening socket issue");
+	}
+
+	if (listen(this->_listening_socket, 10) == UNSET)
+	{
+		close(this->_listening_socket);
+		throw std::runtime_error("Listening to socket issue");
+	}
+
+	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK) , 0)
+	{
+		throw std::runtime_error("Setting socket non-blocking issue");
+	}
+
+	// for (int i = 0; i <= MAX_CONNECTION; i++)
+	// {
+	// 	this->_fds[i].fd = UNSET;
+	// 	this->_fds[i].events = POLLIN;
+	// 	this->_fds[i].revents = 0;
+	// }
 }
 
 Server::~Server()
@@ -22,44 +65,9 @@ void	Server::setup()
 		Need to prepare the listening socket on port (socket(), bind(), listen())
 	*/
 
-	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->_listening_socket == UNSET)
-	{
-		perror("listening socket issue");
-		return ;
-	}
-	int on = 1;
-	if (setsockopt(this->_listening_socket, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-	{
-		perror("setsockopt() failed");
-		close(this->_listening_socket);
-		exit(-1);
-	}
-	std::cout << "port " << this->_server.port << std::endl;
-	std::cout << "listening_socket " << this->_listening_socket << std::endl;
 
-	memset(&this->_sockaddr, 0, sizeof(this->_sockaddr));
-	_sockaddr.sin_family = AF_INET;
-	_sockaddr.sin_port = htons(this->_server.port);
-	_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	std::cout << "port " << this->_server_config.port << std::endl;
 
-	if (bind(this->_listening_socket, reinterpret_cast<const sockaddr *>(&_sockaddr), sizeof(_sockaddr)) == UNSET)
-	{
-		perror("listening socket bind");
-		close(this->_listening_socket);
-		return ;
-	}
-
-	if (listen(this->_listening_socket, 10) == UNSET)
-	{
-		perror("listen");
-		close(this->_listening_socket);
-		return ;
-	}
-
-
-	// if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) < 0)
-	// 	perror("fcntl() error");
 
 	for (int i = 0; i <= MAX_CONNECTION; i++)
 	{
@@ -72,9 +80,6 @@ void	Server::setup()
 		this->_fds[i].events = POLLIN;
 		this->_fds[i].revents = 0;
 	}
-
-	this->_fds[0].fd = this->_listening_socket;
-	this->_fds[0].events = POLLIN;
 }
 
 void	Server::acceptClient(const int &index)
@@ -135,8 +140,8 @@ void	Server::handleRequest(const int &index)
 
 	std::string raw_request(request_buffer, bytes_received);
 	std::cout << "Raw_request: " << raw_request << std::endl;
-	HTTPRequest	request(raw_request, _server);
-	Response response(request, this->_fds[index].fd, _server);
+	HTTPRequest	request(raw_request, _server_config);
+	Response response(request, this->_fds[index].fd, _server_config);
 }
 
 void	Server::sendResponse(const int &index)
@@ -216,7 +221,7 @@ void	Server::closeAll()
 void	Server::end()
 {
 	closeAll();
-	std::cout << "End of server " << this->_server.server_name << std::endl;
+	std::cout << "End of server " << this->_server_config.server_name << std::endl;
 }
 
 
@@ -230,7 +235,15 @@ int		Server::getPid()
 	return this->_pid;
 }
 
+std::string	Server::getName()
+{
+	return this->_name;
+}
 
+int		Server::getListeningSocket()
+{
+	return this->_listening_socket;
+}
 
 
 
