@@ -276,7 +276,7 @@ void HTTPRequest::_getConfigRootOptions(std::string path) // TODO rename TODO (S
 	std::map<std::string, std::string> options;
 	while (path != "")
 	{
-		for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
+		for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
 			 route != _server.routes.end(); ++route)
 		{
 			std::cout << "route->first: " << route->first << std::endl;
