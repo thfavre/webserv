@@ -11,6 +11,7 @@ class ServerManager
 		pollfd		pfd;
 		std::string	server_name;
 		bool		is_listening_socket;
+		std::string	response;
 	};
 
 	std::vector<t_server>		_serverConfigs;
@@ -18,14 +19,16 @@ class ServerManager
 	std::vector<struct epfd>	_fds;
 
 	ServerManager();
+	void	closeSingleSocket();
+	void	stopServers();
 
 	public:
 		ServerManager(std::vector<t_server> serverConfigs);
 		~ServerManager();
 
-		void	launchServers();
-		void	stopServers();
-		Server	&getServerByName(std::string &name);
+		void		launchServers();
+		epfd		makeEpfd(int fd, std::string server_name, bool is_listening_socket);
+		Server		&getServerByName(std::string &name);
 };
 
 #endif

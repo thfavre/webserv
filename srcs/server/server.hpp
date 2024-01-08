@@ -42,20 +42,20 @@ class Server
 		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
 
-		void	setup();
-		int		acceptClient(int server_fd);
-		void	handleRequest(const int &index);
-		void	sendResponse(const int &index);
-		void	run();
-		void	closeSingle(const int &index);
-		void	closeAll();
-		void	end();
+		void		setup();
+		int			acceptClient(int server_fd);
+		std::string	handleRequest(int fd);
+		void		sendResponse(int fd, std::string response);
+		void		run();
+		void		closeSingle(const int &index);
+		void		closeAll();
+		void		end();
 
 		// int		getPollSig();
-		int		availableFd();
-		void	setPid(int pid);
-		int		getPid();
-		int		getListeningSocket();
+		int			availableFd();
+		void		setPid(int pid);
+		int			getPid();
+		int			getListeningSocket();
 		std::string	getName();
 };
 
