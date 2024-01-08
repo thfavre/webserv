@@ -239,9 +239,8 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 
 void HTTPRequest::_parsePath(std::string path)
 {
-	// if (path.back() == '/')
-	// 	path.pop_back();
-	// _getConfigRootOptions(path);
+	if (path.back() == '/')
+		path.pop_back();
 	// TODO check redirections
 	path = _getRedirectedPath(path);
 

@@ -78,6 +78,7 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 	if (_isError())
 	{
 		// TODO ? put in a function
+		_contentType = "text/html";
 		// // _statusMessage = "Not Found";
 		// ! TODO check if the error have a custom error page
 		// check in the config if there is a custom error page for this error

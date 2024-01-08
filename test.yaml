@@ -1,6 +1,6 @@
   - server:
       server_name: site1.com
-      port: 8886
+      port: 8888
       client_max_body_size: 200k
       error_pages:
         - 404: webpage/error_pages/error404.html
@@ -23,8 +23,9 @@
         - /google:
             redirection: http://www.google.com
             root: ./www/site1/
-        - /thomas:
-          root: ./webpage/
+        - /thomas/:
+          root: ./webpage/website1
+          redirection: /index.html
             cgi: .py /usr/bin/python3
             methods: POST GET
 
