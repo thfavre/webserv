@@ -10,6 +10,7 @@ class ServerManager
 	struct epfd {
 		pollfd		pfd;
 		std::string	server_name;
+		bool		is_listening_socket;
 	};
 
 	std::vector<t_server>		_serverConfigs;
@@ -24,6 +25,7 @@ class ServerManager
 
 		void	launchServers();
 		void	stopServers();
+		Server	&getServerByName(std::string &name);
 };
 
 #endif

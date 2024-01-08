@@ -40,7 +40,7 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 		throw std::runtime_error("Listening to socket issue");
 	}
 
-	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK) , 0)
+	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK) < 0)
 	{
 		throw std::runtime_error("Setting socket non-blocking issue");
 	}
@@ -82,30 +82,39 @@ void	Server::setup()
 	}
 }
 
-void	Server::acceptClient(const int &index)
+int		Server::acceptClient(int server_fd)
 {
 	/*
 		Check if there is enough place available for new connection
 	*/
-	int available_fd;
 	sockaddr_in	client_addr;
+	socklen_t	client_len = sizeof(client_addr);
 
-	if ((available_fd = availableFd()) != NO_SIGNAL)
-	{
-		socklen_t	addr_len = sizeof(client_addr);
-		int client_fd = accept(this->_fds[index].fd, (struct sockaddr *)&client_addr, &addr_len);
-		if (client_fd == NO_SIGNAL)
-		{
-			this->_fds[available_fd].fd = UNSET;
-			perror("issue accepting signal");
-		}
-		std::cout << "accepting client " << available_fd << std::endl;
-		this->_fds[available_fd].fd = client_fd;
-		this->_fds[available_fd].events = POLLIN;
-		this->_fds[available_fd].revents = 0;
-	}
-	else
-		perror ("No available fd at the moment");
+	int	client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
+	if (client_fd < 0)
+		throw std::runtime_error("Issue acceptiing new connection");
+
+	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
+		throw std::runtime_error("Issue setting client_fd to unblocking");
+
+	return client_fd;
+
+	// if ((available_fd = availableFd()) != NO_SIGNAL)
+	// {
+	// 	socklen_t	addr_len = sizeof(client_addr);
+	// 	int client_fd = accept(this->_fds[index].fd, (struct sockaddr *)&client_addr, &addr_len);
+	// 	if (client_fd == NO_SIGNAL)
+	// 	{
+	// 		this->_fds[available_fd].fd = UNSET;
+	// 		perror("issue accepting signal");
+	// 	}
+	// 	std::cout << "accepting client " << available_fd << std::endl;
+	// 	this->_fds[available_fd].fd = client_fd;
+	// 	this->_fds[available_fd].events = POLLIN;
+	// 	this->_fds[available_fd].revents = 0;
+	// }
+	// else
+	// 	perror ("No available fd at the moment");
 }
 
 int		Server::availableFd()

@@ -43,7 +43,7 @@ class Server
 		// Server	&operator=(const Server &src);
 
 		void	setup();
-		void	acceptClient(const int &index);
+		int		acceptClient(int server_fd);
 		void	handleRequest(const int &index);
 		void	sendResponse(const int &index);
 		void	run();
