@@ -2,6 +2,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <dirent.h>
+#include <fstream>
+#include <sys/stat.h>
 
 // std::map<int, std::string> _statusCodes = {
 // 	{200, "OK"},
@@ -59,7 +62,9 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	std::string response = _formatResponse(request);
 
 	if (response.length() > 1000)
-		std::cout << "==>Response " << "(first 1000char/"<<response.length()<<")" << ": " << response.substr(0, 500) << "..." << std::endl;
+		std::cout << "==>Response "
+				  << "(first 1000char/" << response.length() << ")"
+				  << ": " << response.substr(0, 500) << "..." << std::endl;
 	else
 		std::cout << "==>Response : " << response << std::endl;
 
@@ -90,7 +95,7 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 			file.open(errorPagePath.c_str(), std::ios::in);
 			if (!file.is_open())
 			{
-				std::cerr << "Error opening file '"<< errorPagePath<< "'" << std::endl;
+				std::cerr << "Error opening file '" << errorPagePath << "'" << std::endl;
 				_statusCode = 404; // Not Found
 				body = _formatGenericErrorPageHTML();
 			}
@@ -170,56 +175,194 @@ std::string Response::_formatGenericErrorPageHTML()
 
 std::string Response::_setBody(const HTTPRequest &request)
 {
-	std::string body;
+	std::string path = request.getRoot() + request.getPath();
 
-	// if cgi
-	if (request.isCGI())
+	// checks if the path is a directory or a file
+	struct stat s;
+	if (stat(path.c_str(), &s) == 0)
 	{
-		_contentType = "text/html";
-		CGIHandler cgiHandler = CGIHandler(request.getRoot() + request.getPath());
-		if (cgiHandler.executeScript(request.getCGIPath()))
+		if (s.st_mode & S_IFDIR) // The path is a directory
 		{
-			_statusCode = 200; // OK
-			return (cgiHandler.getScriptExecutionOutput());
+			std ::cout << "The path is a directory" << std::endl;
+			return (setDirectoryBody(path, request.getReperoryListing()));
 		}
-		else if (cgiHandler.isInfLoop())
+		else if (s.st_mode & S_IFREG) // The path is a file
 		{
-			_statusCode = 508; // Internal Server Error
-			return ("");
+			std::cout << "The path is a file" << std::endl;
+			return (setFileBody(path));
 		}
-		else
+		else // The path is not a directory nor a file
 		{
-			_statusCode = 500; // Internal Server Error
+			std::cout << "The path is not a directory nor a file" << std::endl;
+			_statusCode = 404; // Not Found // TODO check if this is the right status code
 			return ("");
 		}
 	}
-
-	else
+	else // The path doesn't exist
 	{
-		std::string path = request.getRoot() + request.getPath();
-		std::cout << "path : " << path << std::endl;
-		std::ifstream file;
-		file.open(path.c_str(), std::ios::in);
-		if (!file.is_open())
-		{
-			std::cerr << "Error opening file '" << path<< "'" << std::endl;
-			_statusCode = 404; // Not Found
-			return ("");
-		}
-		std::string line;
-		while (std::getline(file, line))
-			body += line;
-		file.close();
-		return (body);
+		std::cout << "The path doesn't exist" << std::endl;
+		_statusCode = 404; // Not Found
+		return ("");
 	}
 }
+
+std::string Response::setFileBody(const std::string &path)
+{
+	std::string body;
+	std::ifstream file;
+	file.open(path.c_str());
+	if (!file.is_open())
+	{
+		std::cerr << "Error opening file '" << path << "'" << std::endl;
+		_statusCode = 404; // Not Found
+		return ("");
+	}
+	std::string line;
+	while (std::getline(file, line))
+		body += line;
+	file.close();
+	return (body);
+
+}
+
+std::string Response::setDirectoryBody(const std::string &path, bool repertoryListing)
+{
+	std::string body;
+	if (repertoryListing)
+	{
+		_contentType = "text/html";
+		std::cout << "->repertory listing" << std::endl;
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir(path.c_str())) != NULL)
+		{
+			body += "<html><body><h1>Repertory Listing of " + path + "</h1></body></html>";
+			/* print all the files and directories within directory */
+			while ((ent = readdir(dir)) != NULL)
+			{
+				printf("%s\n", ent->d_name);
+				body += "<li><a href=\"" + std::string(ent->d_name) + "\">" + std::string(ent->d_name) + "</a></li>";
+			}
+			closedir(dir);
+		}
+
+		// _statusCode = 404; // Not Found
+		return (body);
+	}
+	else
+	{
+		_statusCode = 404; // Not Found
+		return ("");
+	}
+
+}
+
+
+
+// std::string Response::_setBody(const HTTPRequest &request)
+// {
+// 	std::string body;
+
+// 	std::string path = request.getRoot() + request.getPath();
+
+// 	// if cgi
+// 	if (request.isCGI())
+// 	{
+// 		_contentType = "text/html";
+// 		CGIHandler cgiHandler = CGIHandler(path);
+// 		if (cgiHandler.executeScript(request.getCGIPath()))
+// 		{
+// 			_statusCode = 200; // OK
+// 			return (cgiHandler.getScriptExecutionOutput());
+// 		}
+// 		else if (cgiHandler.isInfLoop())
+// 		{
+// 			_statusCode = 508; // Internal Server Error
+// 			return ("");
+// 		}
+// 		else
+// 		{
+// 			_statusCode = 500; // Internal Server Error
+// 			return ("");
+// 		}
+// 	}
+
+// 	else
+// 	{
+// 		std::cout << "path : " << path << std::endl;
+// 		std::ifstream file;
+// 		file.open(path.c_str());
+// 		struct stat s;
+// 		if (stat(path.c_str(), &s) == 0)
+// 		{
+// 			if (s.st_mode & S_IFDIR)
+// 			{
+// 				// it's a directory
+// 				std ::cout << "stat it's a directory" << std::endl;
+// 			}
+// 			else if (s.st_mode & S_IFREG)
+// 			{
+// 				// it's a file
+// 				std::cout << "stat it's a file" << std::endl;
+// 			}
+// 			else
+// 			{
+// 				// something else
+// 				std::cout << "stat something else" << std::endl;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			std::cout << "stat error" << std::endl;
+// 		}
+
+// 		if (!file.is_open())
+// 		{
+// 			std::cout << "Error opening file '" << path << "'" << std::endl;
+
+// 			// check repertory listing
+// 			_contentType = "text/html";
+// 			// TODO make it a function
+// 			if (request.getReperoryListing())
+// 			{
+// 				std::cout << "->repertory listing" << std::endl;
+// 				DIR *dir;
+// 				struct dirent *ent;
+// 				if ((dir = opendir(path.c_str())) != NULL)
+// 				{
+// 					/* print all the files and directories within directory */
+// 					while ((ent = readdir(dir)) != NULL)
+// 					{
+// 						printf("%s\n", ent->d_name);
+// 					}
+// 					closedir(dir);
+// 				}
+
+// 				std::cerr << "Error opening file '" << path << "'" << std::endl;
+// 				// _statusCode = 404; // Not Found
+// 				return ("REP LISTING");
+// 			}
+// 			else
+// 			{
+// 				_statusCode = 404; // Not Found
+// 				return ("");
+// 			}
+// 		}
+// 		std::cout << "File opened" << std::endl;
+// 		std::string line;
+// 		while (std::getline(file, line))
+// 			body += line;
+// 		file.close();
+// 		return (body);
+// 	}
+// }
 
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {
 	std::string headers;
 
 	headers = _httpProtocolVersion + " " + std::to_string(_statusCode) + " " + getStatusCodeMessage(_statusCode) + "\r\n";
-	headers += "Content-Type: " +_contentType + "\r\n"; // TODO put the right content type
+	headers += "Content-Type: " + _contentType + "\r\n"; // TODO put the right content type
 	// if (bodyLength > 0)
 	headers += "Content-Length: " + std::to_string(bodyLength) + "\r\n";
 

@@ -583,6 +583,15 @@ const std::string &HTTPRequest::getRoot() const
 	return (root);
 }
 
+bool HTTPRequest::getReperoryListing() const
+{
+	if (_configRootOptions.find("repertory_listing") == _configRootOptions.end())
+		return (false);
+	if (_configRootOptions.at("repertory_listing") == "true" || _configRootOptions.at("repertory_listing") == "on")
+		return (true);
+	return (false);
+}
+
 bool HTTPRequest::isCGI() const
 {
 	return (_isCGI);

@@ -21,6 +21,7 @@ public:
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
 	const std::string &getRoot() const;
+	bool getReperoryListing() const;
 	const int &getStatusCode() const;
 	// bool isError() const;
 	bool isCGI() const;

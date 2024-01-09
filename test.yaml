@@ -28,6 +28,10 @@
           index: /index.html
             cgi: .py /usr/bin/python3
             methods: POST GET
+        - /images:
+          root: ./webpage/website1
+            methods: GET
+            repertory_listing: true
 
 
     - server:
