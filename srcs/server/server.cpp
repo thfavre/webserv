@@ -44,6 +44,8 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 	{
 		throw std::runtime_error("Setting socket non-blocking issue");
 	}
+
+	std::cout << "Server " << this->_name << " available on port " << this->_server_config.port << std::endl;
 }
 
 Server::~Server()
@@ -71,7 +73,12 @@ std::string	Server::handleRequest(int fd)
 	char	request_buffer[MAX_REQUEST_SIZE];
 	int		bytes_received = read(fd, request_buffer, MAX_REQUEST_SIZE);
 	if (bytes_received == NO_SIGNAL)
+	{
+		std::cerr << "Error reading from fd " << fd << ": " << strerror(errno) << std::endl;
+		std::cout << "bytes received in case of error " << bytes_received << std::endl;
+		std::cout << "and here is the fd related " << fd << std::endl;
 		return (std::string());
+	}
 
 	std::string raw_request(request_buffer, bytes_received);
 	std::cout << "Raw_request: " << raw_request << std::endl;

@@ -18,7 +18,7 @@
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
-#define MAX_CONNECTION 50
+#define MAX_CONNECTION 500
 #define MAX_REQUEST_SIZE 1000
 #define WAITING 0
 #define UNSET -1
