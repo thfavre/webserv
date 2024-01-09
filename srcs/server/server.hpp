@@ -1,16 +1,13 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-// #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstring>
-// #include <map>
-// #include <vector>
-#include <poll.h>
 #include <fcntl.h>
 #include <cstring>
+#include <poll.h>
 #include "../request/HTTPRequest.hpp"
 #include "../response/Response.hpp"
 #include "../Configuration/ConfigParse.hpp"
@@ -21,7 +18,7 @@
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
-#define MAX_CONNECTION 50
+#define MAX_CONNECTION 500
 #define MAX_REQUEST_SIZE 1000
 #define WAITING 0
 #define UNSET -1
@@ -29,33 +26,37 @@
 
 class Server
 {
+	std::string				_name;
 	int						_listening_socket;
 	int						_pid;
-	t_server				_server;
+	int						_sockaddr_len;
+	t_server				_server_config;
 	sockaddr_in				_sockaddr;
 	pollfd					_fds[MAX_CONNECTION];
 
 
 	public:
 		Server();
-		Server(const t_server &server);
+		Server(const t_server &server_config);
 		~Server();
 		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
 
-		void	setup();
-		void	acceptClient(const int &index);
-		void	handleRequest(const int &index);
-		void	sendResponse(const int &index);
-		void	run();
-		void	closeSingle(const int &index);
-		void	closeAll();
-		void	end();
+		void		setup();
+		int			acceptClient(int server_fd);
+		std::string	handleRequest(int fd);
+		void		sendResponse(int fd, std::string response);
+		void		run();
+		void		closeSingle(const int &index);
+		void		closeAll();
+		void		end();
 
 		// int		getPollSig();
-		int		availableFd();
-		void	setPid(int pid);
-		int		getPid();
+		int			availableFd();
+		void		setPid(int pid);
+		int			getPid();
+		int			getListeningSocket();
+		std::string	getName();
 };
 
 #endif

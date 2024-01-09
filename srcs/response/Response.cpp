@@ -50,17 +50,18 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 
 Response::Response(const HTTPRequest &request, int socketFd, const t_server &server) : _server(server)
 {
+	(void) socketFd; //TODO: remove it as it is not needed anymore
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 
 	_statusCode = request.getStatusCode();
 	// if is cgi
 	// formart cgi response (read the output of the cgi from a pipe)
 	// else
-	std::string response = _formatResponse(request);
+	this->_response = _formatResponse(request);
 	std::cout << "**Response : \n"
 			  << std::endl
-			  << response << std::endl;
-	_sendResponse(socketFd, response);
+			  << this->_response << std::endl;
+	// _sendResponse(socketFd, response);
 }
 
 std::string Response::_formatResponse(const HTTPRequest &request)
@@ -189,7 +190,7 @@ bool Response::_isError()
 }
 
 // /* ****** Getters ****** */
-// const std::string Response::getResponse() const
-// {
-// 	return (_response);
-// }
+const std::string Response::getResponse() const
+{
+	return (_response);
+}
