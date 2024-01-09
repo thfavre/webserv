@@ -239,7 +239,7 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 
 void HTTPRequest::_parsePath(std::string path)
 {
-	if (path.back() == '/')
+	if (path.length() > 1 && path.back() == '/')
 		path.pop_back();
 	// TODO check redirections
 	path = _getRedirectedPath(path);
@@ -247,11 +247,11 @@ void HTTPRequest::_parsePath(std::string path)
 	// std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
 	std::cout << YELLOW << "path: " << RESET << path << std::endl;
 
-	if (path.empty())
-	{
-		_statusCode = 400;
-		throw(HTTPRequest::InvalidRequestException("No path specified"));
-	}
+	// if (path.empty())
+	// {
+	// 	_statusCode = 400;
+	// 	throw(HTTPRequest::InvalidRequestException("No path specified"));
+	// }
 	if (!_areAllPathCharactersValid(path))
 	{
 		_statusCode = 400;
@@ -278,8 +278,8 @@ void HTTPRequest::_getConfigRootOptions(std::string path) // TODO rename TODO (S
 		for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
 			 route != _server.routes.end(); ++route)
 		{
-			std::cout << "route->first: " << route->first << std::endl;
-			std ::cout << "\tpath: " << path << std::endl;
+			// std::cout << "route->first: " << route->first << std::endl;
+			// std ::cout << "\tpath: " << path << std::endl;
 			if (path == route->first)
 			{
 				options = route->second;
@@ -342,7 +342,8 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 		}
 		else if (_configRootOptions.find("index") != _configRootOptions.end())
 		{
-			redirection = path + "/" + _configRootOptions["index"];
+			// redirection = path + "/" + _configRootOptions["index"];
+			redirection = "/" + _configRootOptions["index"];
 			std::cout << GREEN << "index: " << RESET << redirection << std::endl;
 		}
 	}
