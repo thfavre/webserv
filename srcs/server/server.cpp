@@ -68,10 +68,16 @@ int			Server::acceptClient(int server_fd)
 	return client_fd;
 }
 
-std::string	Server::handleRequest(int fd)
+std::string	Server::handleRequest(int fd, bool *keep_alive)
 {
 	char	request_buffer[MAX_REQUEST_SIZE];
 	int		bytes_received = read(fd, request_buffer, MAX_REQUEST_SIZE);
+	if (bytes_received == 0)
+	{
+		/*
+			Need to close the socket, it means that there is nothing sent from the client
+		*/
+	}
 	if (bytes_received == NO_SIGNAL)
 	{
 		std::cerr << "Error reading from fd " << fd << ": " << strerror(errno) << std::endl;
@@ -84,6 +90,8 @@ std::string	Server::handleRequest(int fd)
 	std::cout << "Raw_request: " << raw_request << std::endl;
 	HTTPRequest	request(raw_request, _server_config);
 	Response response(request, fd, _server_config);
+	if (request.getHeader("close") == "close")
+		*keep_alive = false;
 	return (response.getResponse());
 }
 

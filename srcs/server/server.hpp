@@ -34,7 +34,6 @@ class Server
 	sockaddr_in				_sockaddr;
 	pollfd					_fds[MAX_CONNECTION];
 
-
 	public:
 		Server();
 		Server(const t_server &server_config);
@@ -44,7 +43,7 @@ class Server
 
 		void		setup();
 		int			acceptClient(int server_fd);
-		std::string	handleRequest(int fd);
+		std::string	handleRequest(int fd, bool *keep_alive);
 		void		sendResponse(int fd, std::string response);
 		void		run();
 		void		closeSingle(const int &index);

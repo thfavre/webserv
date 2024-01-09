@@ -45,28 +45,39 @@ void	ServerManager::launchServers()
 					// Handle listening socket event
 					int client_fd = tmpServ.acceptClient(this->_fds[i].pfd.fd);
 					this->_fds.push_back(makeEpfd(client_fd, this->_fds[i].server_name, false));
+					checkLogs(this->_fds);
 				} else {
 					// Handle client socket event
-					this->_fds[i].response = tmpServ.handleRequest(this->_fds[i].pfd.fd);
+					//TODO: might need to close the socket if request says "close" in the header
+					this->_fds[i].response = tmpServ.handleRequest(this->_fds[i].pfd.fd, &this->_fds[i].keep_alive);
 					if (this->_fds[i].response.empty())
 					{
 						//TODO: closing the socket or closing the program in itself ??
-						throw std::runtime_error("Issue getting request from client");
+						closeSingleSocket(i);
+						// throw std::runtime_error("Issue getting request from client"); //Not sure that it is needed to throw error for these cases
 					}
-					this->_fds[i].pfd.events = POLLOUT;
+					else
+					{
+						this->_fds[i].pfd.events = POLLOUT;
+					}
 				}
 			}
 			else if (tempPollfds[i].revents & POLLOUT)
 			{
 				// Handle sending response to client
 				tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response);
-				this->_fds[i].pfd.events = POLLIN;
+				if (!this->_fds[i].keep_alive)
+					closeSingleSocket(i);
+				else
+					this->_fds[i].pfd.events = POLLIN;
 			}
 			else if (tempPollfds[i].revents & (POLLERR | POLLHUP))
 			{
 				// Handle poll errors
-				close(this->_fds[i].pfd.fd);
-				this->_fds.erase(this->_fds.begin() + i);
+				closeSingleSocket(i);
+				std::cout << "Closing socket " << i << " because of POLLERR | POLLHUP" << std::endl;
+				// close(this->_fds[i].pfd.fd);
+				// this->_fds.erase(this->_fds.begin() + i);
 			}
 		}
 	}
@@ -91,12 +102,13 @@ ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bo
 	newEpfd.pfd.revents = 0;
 	newEpfd.server_name = server_name;
 	newEpfd.is_listening_socket = is_listening_socket;
+	newEpfd.keep_alive = true;
 	newEpfd.response = "";
 
 	return newEpfd;
 }
 
-void	ServerManager::stopServers()
+void		ServerManager::stopServers()
 {
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
@@ -107,7 +119,24 @@ void	ServerManager::stopServers()
 	}
 }
 
-void	ServerManager::closeSingleSocket()
+void		ServerManager::closeSingleSocket(int index)
 {
+	if (index < 0 || static_cast<size_t>(index) >= this->_fds.size())
+		return;
+	if (this->_fds[index].pfd.fd >= 0)
+	{
+		close(this->_fds[index].pfd.fd);
+		this->_fds[index].pfd.fd = UNSET;
+	}
+	this->_fds.erase(this->_fds.begin() + index);
+}
 
+
+void		ServerManager::checkLogs(std::vector<struct epfd> fds)
+{
+	std::cout << "-----Checking logs-----" << std::endl;
+	for (size_t i = 0; i < fds.size(); i++)
+	{
+		std::cout << "FD " << fds[i].pfd.fd << " (listening: " << fds[i].is_listening_socket << ", name: " << fds[i].server_name << std::endl;
+	}
 }
