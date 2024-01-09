@@ -27,8 +27,8 @@ class Response
 		std::string _formatResponse(const HTTPRequest &request);
 		std::string _formatGenericErrorPageHTML();
 		std::string _setBody(const HTTPRequest &request);
-		std::string setFileBody(const std::string &path);
-		std::string setDirectoryBody(const std::string &path, bool reperoryListing);
+		std::string _setFileBody(const std::string &path);
+		std::string _setDirectoryBody(const std::string &path, bool reperoryListing, int rootLength);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
 		// std::string _getContentType(const std::string &path);
 		void _sendResponse(int socketFd, const std::string &response);

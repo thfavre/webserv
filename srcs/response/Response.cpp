@@ -138,17 +138,17 @@ std::string Response::_getContentType(const std::string &path)
 	else if (extension == "js")
 		return ("text/javascript");
 	else if (extension == "jpg")
-		return ("image/jpeg");
+		return ("text/jpeg");
 	else if (extension == "jpeg")
-		return ("image/jpeg");
+		return ("text/jpeg");
 	else if (extension == "png")
-		return ("image/png");
+		return ("text/png");
 	else if (extension == "gif")
-		return ("image/gif");
+		return ("text/gif");
 	else if (extension == "svg")
-		return ("image/svg+xml");
+		return ("text/svg+xml");
 	else if (extension == "ico")
-		return ("image/x-icon");
+		return ("text/x-icon"); // ? TODO image or text
 	else if (extension == "mp3")
 		return ("audio/mpeg");
 	else if (extension == "mp4")
@@ -184,12 +184,12 @@ std::string Response::_setBody(const HTTPRequest &request)
 		if (s.st_mode & S_IFDIR) // The path is a directory
 		{
 			std ::cout << "The path is a directory" << std::endl;
-			return (setDirectoryBody(path, request.getReperoryListing()));
+			return (_setDirectoryBody(path, request.getReperoryListing(), request.getRoot().length()));
 		}
 		else if (s.st_mode & S_IFREG) // The path is a file
 		{
 			std::cout << "The path is a file" << std::endl;
-			return (setFileBody(path));
+			return (_setFileBody(path));
 		}
 		else // The path is not a directory nor a file
 		{
@@ -206,7 +206,7 @@ std::string Response::_setBody(const HTTPRequest &request)
 	}
 }
 
-std::string Response::setFileBody(const std::string &path)
+std::string Response::_setFileBody(const std::string &path)
 {
 	std::string body;
 	std::ifstream file;
@@ -225,7 +225,7 @@ std::string Response::setFileBody(const std::string &path)
 
 }
 
-std::string Response::setDirectoryBody(const std::string &path, bool repertoryListing)
+std::string Response::_setDirectoryBody(const std::string &path, bool repertoryListing, int rootLength)
 {
 	std::string body;
 	if (repertoryListing)
@@ -241,7 +241,9 @@ std::string Response::setDirectoryBody(const std::string &path, bool repertoryLi
 			while ((ent = readdir(dir)) != NULL)
 			{
 				printf("%s\n", ent->d_name);
-				body += "<li><a href=\"" + std::string(ent->d_name) + "\">" + std::string(ent->d_name) + "</a></li>";
+				std::string href = path + "/" + std::string(ent->d_name);
+				href = href.substr(rootLength);
+				body += "<li><a href=\"" + href + "\">" + std::string(ent->d_name) + "</a></li>";
 			}
 			closedir(dir);
 		}
