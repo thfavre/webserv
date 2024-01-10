@@ -1,63 +1,48 @@
-  - server:
-      server_name: site1.com
-      port: 9000
-      client_max_body_size: 200k
-      error_pages:
-        - 404: www/errors/404.html
-        - 405: www/errors/405.html
-      routes:
-        - /admin:
-            root: ./www/site1/
-            repertory_listing: true
-        - /:
-            methods: GET POST
-            root: ./webpage/website1
-            repertory_listing: false
-            index: index.html
-        - /new_user:
-            root: ./www/site1/new_user/
-            redirection: /404.html
-            cgi: .py /urs/bin/python
-            repertory_listing: true
-        - /google:
-            redirection: http://www.google.com
-            root: ./www/site1/
-        - /thomas:
-          root: ./webpage
-            cgi: .py /usr/bin/python3
-            methods: POST GET
+- server:
+    server_name: site1.com
+    port: 8888
+    client_max_body_size: 200k
+    error_pages:
+    - 404: webpage/error_pages/error404.html
+    - 405: webpage/error_pages/error405.html
+    routes:
+      - /:
+          methods: GET POST
+          root: ./webpage/website1
+          index: index.html
+      - /images:
+          root: ./webpage/website1/images
+          methods: GET
+          repertory_listing: true
+      - /google:
+          methods: GET
+          redirection: http://www.google.com
+      - /test:
+          methods: GET
+          root: ./webpage/website1/test
+          index: index.html
+          cgi: .py /usr/bin/python3
 
 
-    - server:
-      server_name: site2.com
-      port: 8081
-      client_max_body_size: 2k
-      error_pages:
-        - 404: ./www/errors/404.html
-      routes:
-        - /:
-            methods: GET
-            root: ./www/site2/
-            repertory_listing: false
-            index: index.html
-        - /admin:
-            methods: GET
-            root: ./www/site2/admin2
-            repertory_listing: true
-
-    - server:
-      server_name: site3.com
-      port: 8082
-      client_max_body_size: 2k
-      error_pages:
-        - 404: ./www/errors/404.html
-      routes:
-        - /:
-            methods: GET
-            root: ./www/site3/
-            repertory_listing: false
-            index: index.html
-        - /vide:
-            methods: GET
-            root: ./www/site3/vide/
-            repertory_listing: true
+- server:
+    server_name: site2.com
+    port: 8889
+    client_max_body_size: 200k
+    error_pages:
+    routes:
+      - /:
+          methods: GET POST
+          root: ./webpage/website1
+          index: index.html
+      - /images:
+          root: ./webpage/website1/images
+          methods: GET
+          repertory_listing: true
+      - /google:
+          methods: GET
+          redirection: http://www.google.com
+      - /test:
+          methods: GET
+          root: ./webpage/website1/test
+          index: index.html
+          cgi: .py /usr/bin/python3

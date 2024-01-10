@@ -20,6 +20,8 @@ public:
 	const std::string &getHttpProtocolVersion() const;
 	const std::string &getHeader(const std::string &headerName) const;
 	const std::string &getBody() const;
+	const std::string &getRoot() const;
+	bool getReperoryListing() const;
 	const int &getStatusCode() const;
 	// bool isError() const;
 	bool isCGI() const;
@@ -49,6 +51,8 @@ private:
 	std::string _CGIPath;
 	t_server _server;
 	std::map<std::string, std::string> _configRootOptions; //
+	std::string _configRoute;
+	// std::string _root;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -68,7 +72,7 @@ private:
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
 	void _parsePath(std::string path);
-	void _getConfigRootOptions(std::string path);
+	void _getConfigRootOptions(const std::string &requestPath);
 	const std::string _getRedirectedPath(const std::string &path);
 	bool _areAllPathCharactersValid(const std::string &path);
 	bool _isSafePath(const std::string &path);
