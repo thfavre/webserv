@@ -72,7 +72,7 @@ private:
 	void _parseHeaderLine(const std::string &headerLine);
 	void _parseMethod(const std::string &method);
 	void _parsePath(std::string path);
-	void _getConfigRootOptions(std::string path);
+	std::string _getConfigRootOptions(const std::string &requestPath);
 	const std::string _getRedirectedPath(const std::string &path);
 	bool _areAllPathCharactersValid(const std::string &path);
 	bool _isSafePath(const std::string &path);

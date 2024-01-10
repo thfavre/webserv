@@ -175,10 +175,13 @@ std::string Response::_formatGenericErrorPageHTML()
 
 std::string Response::_setBody(const HTTPRequest &request)
 {
-	std::string path = request.getRoot() + request.getPath();
+	if (_statusCode == 301) // do not set body for redirection
+		return "";
 
+	std::string path = request.getRoot() + request.getPath();
 	// checks if the path is a directory or a file
 	struct stat s;
+	std::cout << "\tpath : " << path << std::endl;
 	if (stat(path.c_str(), &s) == 0)
 	{
 		if (s.st_mode & S_IFDIR) // The path is a directory
@@ -188,7 +191,9 @@ std::string Response::_setBody(const HTTPRequest &request)
 		}
 		else if (s.st_mode & S_IFREG) // The path is a file
 		{
-			std::cout << "The path is a file" << std::endl;
+			std::cout << "The path ("<< path<<") is a file" << std::endl;
+			if (request.isCGI())
+				return (_setCGIBody(path, request.getCGIPath()));
 			return (_setFileBody(path));
 		}
 		else // The path is not a directory nor a file
@@ -206,10 +211,34 @@ std::string Response::_setBody(const HTTPRequest &request)
 	}
 }
 
+std::string Response::_setCGIBody(const std::string &path, const std::string &CGIPath)
+{
+		_contentType = "text/html";
+		CGIHandler cgiHandler = CGIHandler(path);
+		if (cgiHandler.executeScript(CGIPath))
+		{
+			_statusCode = 200; // OK
+			return (cgiHandler.getScriptExecutionOutput());
+		}
+		else if (cgiHandler.isInfLoop())
+		{
+			_statusCode = 508; // Internal Server Error
+			return ("");
+		}
+		else
+		{
+			_statusCode = 500; // Internal Server Error
+			return ("");
+		}
+
+}
+
+
 std::string Response::_setFileBody(const std::string &path)
 {
 	std::string body;
 	std::ifstream file;
+
 	file.open(path.c_str());
 	if (!file.is_open())
 	{
@@ -240,7 +269,7 @@ std::string Response::_setDirectoryBody(const std::string &path, bool repertoryL
 			/* print all the files and directories within directory */
 			while ((ent = readdir(dir)) != NULL)
 			{
-				printf("%s\n", ent->d_name);
+				std::cout << "ent->d_name : " << ent->d_name << std::endl;
 				std::string href = path + "/" + std::string(ent->d_name);
 				href = href.substr(rootLength);
 				body += "<li><a href=\"" + href + "\">" + std::string(ent->d_name) + "</a></li>";
@@ -374,7 +403,7 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 	else
 		headers += "Connection: keep-alive\r\n";
 	// Location
-	if (_statusCode == 301 || _statusCode == 302)
+	// if (_statusCode == 301 || _statusCode == 302)
 		headers += "Location: " + request.getPath() + "\r\n";
 	// TODO
 

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8">
+
+
+    <link rel="apple-touch-icon" type="image/png" href="https://cpwebassets.codepen.io/assets/favicon/apple-touch-icon-5ae1a0698dcc2402e9712f7d01ed509a57814f994c660df9f7a952f3060705ee.png" />
+
+    <meta name="apple-mobile-web-app-title" content="CodePen">
+
+    <link rel="shortcut icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/favicon-aec34940fbc1a6e787974dcd360f2c6b63348d4b1f4e06c77743096d55480f33.ico" />
+
+    <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />
+
+
+
+
+    <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
+
+
+  <title>Press The Blue Button</title>
+
+    <link rel="canonical" href="https://codepen.io/cameronws/pen/WNEZebz">
+
+
+
+
+<style>
+@font-face {
+  src: url("https://res.cloudinary.com/dr6lvwubh/raw/upload/v1529908256/CompressaPRO-GX.woff2");
+  font-family: "Compressa VF";
+  font-style: normal;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: #211D26;
+}
+
+.container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.box {
+  position: absolute;
+  width: 550px;
+  height: 350px;
+}
+.box.one {
+  top: 75px;
+  left: 190px;
+}
+.box.one:hover ~ .button {
+  transform: translate(175px, -275px);
+}
+.box.two {
+  top: 75px;
+  left: 740px;
+}
+.box.two:hover ~ .button {
+  transform: translate(-375px, 125px);
+}
+.box.three {
+  top: 425px;
+  left: 190px;
+}
+.box.three:hover ~ .button {
+  transform: translate(175px, 125px);
+}
+.box.four {
+  top: 425px;
+  left: 740px;
+}
+.box.four:hover ~ .button {
+  transform: translate(-375px, -275px);
+}
+
+.button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2rem;
+  transition: 0.5s all ease;
+}
+.button:hover {
+  transform: translate(-375px, -275px);
+}
+
+button {
+  padding: 1rem;
+  color: #211D26;
+  background-color: #2853b5;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.7rem;
+  font-weight: 600;
+  font-family: "Effra", sans-serif;
+  transition: 0.3s ease;
+  transition-delay: 1s;
+}
+button:hover {
+  cursor: pointer;
+  background-color: #ff0000;
+}
+</style>
+
+  <script>
+  window.console = window.console || function(t) {};
+</script>
+
+
+
+</head>
+
+<body translate="no">
+  zz<div class="container">
+  <div class="box one"></div>
+  <div class="box two"></div>
+  <div class="box three"></div>
+  <div class="box four"></div>
+  <div class="button">
+    <!-- When pressend change the user to index2.html -->
+    <button type="button" onclick="window.location.href='index.html'">Press Me
+      <span></span></button>
+  </div>
+</div>
+
+      <script id="rendered-js" >
+// NO JAVA
+//# sourceURL=pen.js
+    </script>
+
+
+</body>
+
+</html>
