@@ -303,16 +303,16 @@ std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 	return (headers);
 }
 
-void Response::_sendResponse(int socketFd, const std::string &response)
-{
-	if (send(socketFd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
-	{
-		std::cout << "Response sent" << std::endl;
-		// if connexion close -> close socket ?
-	}
-	else
-		std::cerr << "Error sending response" << std::endl;
-}
+// void Response::_sendResponse(int socketFd, const std::string &response)
+// {
+// 	if (send(socketFd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
+// 	{
+// 		std::cout << "Response sent" << std::endl;
+// 		// if connexion close -> close socket ?
+// 	}
+// 	else
+// 		std::cerr << "Error sending response" << std::endl;
+// }
 
 bool Response::_isError()
 {

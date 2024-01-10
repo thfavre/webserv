@@ -31,7 +31,7 @@ class Response
 		std::string _setDirectoryBody(const std::string &path, bool reperoryListing, int rootLength);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
 		// std::string _getContentType(const std::string &path);
-		void _sendResponse(int socketFd, const std::string &response);
+		// void _sendResponse(int socketFd, const std::string &response);
 		bool _isError();
 };
 
