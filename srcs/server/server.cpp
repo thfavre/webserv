@@ -2,7 +2,7 @@
 
 Server::Server()
 {
-	memset(&_fds, UNSET, sizeof(_fds));
+
 }
 
 Server::Server(const t_server &server_config) : _server_config(server_config)
@@ -12,40 +12,48 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 	this->_listening_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_listening_socket == UNSET)
 	{
-		throw std::runtime_error("listening socket issue");
+		throw std::runtime_error("[EXCEPTION] listening socket issue");
 	}
 
 	int on = 1;
 	if (setsockopt(this->_listening_socket, SOL_SOCKET,  SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 	{
 		close(this->_listening_socket);
-		throw std::runtime_error("setsockopt() failed");
+		throw std::runtime_error("[EXCEPTION] setsockopt() failed");
 	}
 
-	memset(&this->_sockaddr, 0, sizeof(this->_sockaddr));
-	this->_sockaddr.sin_family = AF_INET;
-	this->_sockaddr.sin_port = htons(this->_server_config.port);
-	this->_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	this->_sockaddr_len = sizeof(this->_sockaddr);
+	sockaddr_in	tmp_sockaddr;
+	tmp_sockaddr.sin_family = AF_INET;
+	tmp_sockaddr.sin_port = htons(this->_server_config.port);
+	tmp_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	this->_sockaddr = tmp_sockaddr;
+	this->_sockaddr_len = sizeof(tmp_sockaddr);
 
 	if (bind(this->_listening_socket, (struct sockaddr *) &this->_sockaddr, this->_sockaddr_len) < 0)
 	{
 		close(this->_listening_socket);
-		throw std::runtime_error("Binding listening socket issue");
+		throw std::runtime_error("[EXCEPTION] Binding listening socket issue");
 	}
 
-	if (listen(this->_listening_socket, 10) == UNSET)
+	if (listen(this->_listening_socket, 100) == UNSET)
 	{
 		close(this->_listening_socket);
-		throw std::runtime_error("Listening to socket issue");
+		throw std::runtime_error("[EXCEPTION] Listen to listening socket issue");
 	}
 
 	if (fcntl(this->_listening_socket, F_SETFL, O_NONBLOCK) < 0)
 	{
-		throw std::runtime_error("Setting socket non-blocking issue");
+		throw std::runtime_error("[EXCEPTION] Setting socket non-blocking issue");
 	}
 
 	std::cout << "Server " << this->_name << " available on port " << this->_server_config.port << std::endl;
+}
+
+Server::Server(const Server &src)
+{
+	// Implement copying logic here, ensuring proper duplication of resources
+	this->_name = src._name;
+	this->_server_config = src._server_config;
 }
 
 Server::~Server()
@@ -60,46 +68,67 @@ int			Server::acceptClient(int server_fd)
 
 	int	client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
 	if (client_fd < 0)
-		throw std::runtime_error("Issue acceptiing new connection");
+		throw std::runtime_error("[EXCEPTION] Issue accepting new connection");
 
 	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
-		throw std::runtime_error("Issue setting client_fd to unblocking");
-
+		throw std::runtime_error("[EXCEPTION] Issue setting client_fd to unblocking");
+	std::cout << CYAN << "[LOG] Accepting new connection on fd " << client_fd << RESET << std::endl;
 	return client_fd;
 }
 
-std::string	Server::handleRequest(int fd)
+std::string	Server::handleRequest(int fd, bool *keep_alive)
 {
 	char	request_buffer[MAX_REQUEST_SIZE];
-	int		bytes_received = read(fd, request_buffer, MAX_REQUEST_SIZE);
+	ssize_t		bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
+	if (bytes_received == 0)
+	{
+		std::cout << CYAN << "[LOG] Connection closed by the client on fd " << fd << RESET << std::endl;
+		return (std::string());
+	}
 	if (bytes_received == NO_SIGNAL)
 	{
-		std::cerr << "Error reading from fd " << fd << ": " << strerror(errno) << std::endl;
+		std::cerr << RED << "[ERROR] No signal received from client on fd " << fd << ": " << strerror(errno) << RESET << std::endl;
 		std::cout << "bytes received in case of error " << bytes_received << std::endl;
 		std::cout << "and here is the fd related " << fd << std::endl;
+		// std::cerr << RED << "[ERROR] No response made, closing the socket at index " << i << " It has an fd of " << this->_fds[i].pfd.fd << RESET << std::endl;
 		return (std::string());
 	}
 
 	std::string raw_request(request_buffer, bytes_received);
-	std::cout << "Raw_request: " << raw_request << std::endl;
+	//TODO: Should I [LOG] the request ??
+
 	HTTPRequest	request(raw_request, _server_config);
 	Response response(request, fd, _server_config);
+
+	if (strcasecmp(request.getHeader("close").c_str(), "close") == 0)
+		*keep_alive = false;
+
 	return (response.getResponse());
 }
 
-void		Server::sendResponse(int fd, std::string response)
+int			Server::sendResponse(int fd, std::string response)
 {
-	if (send(fd, response.c_str(), response.length(), MSG_DONTWAIT) != -1)
+	ssize_t bytes_sent = send(fd, response.c_str(), response.length(), MSG_DONTWAIT);
+
+	if (bytes_sent > 0)
 	{
-		std::cout << "Response sent" << std::endl;
+		if (static_cast<size_t>(bytes_sent) != response.length())
+			std::cerr << RED << "[ERROR] Response not sent entirely: " << bytes_sent << "/" << response.length() << RESET << std::endl;
+		else
+			std::cout << CYAN << "[LOG] Response sent on fd " << fd << RESET << std::endl;
+		return 1;
 	}
-	else
+	else if (bytes_sent == 0)
 	{
-		throw std::runtime_error("Issue sending the response");
-		/*
-			TODO: Need to check if I close the socket in case of issue sending the response, or if we just reset the socket back to POLLIN
-		*/
+		std::cout << CYAN << "[LOG] Client closed the connection on fd " << fd << RESET << std::endl;
+		return 0;
 	}
+	else if (bytes_sent == -1)
+	{
+		std::cout << RED << "[ERROR] Issue sending the response on fd " << fd << RESET << std::endl;
+		return 0;
+	}
+	return 0;
 }
 
 std::string	Server::getName()

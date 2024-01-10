@@ -281,6 +281,53 @@ std::string Response::_setDirectoryBody(const std::string &path, bool repertoryL
 
 }
 
+
+// std::string Response::_setBody(const HTTPRequest &request)
+// {
+// 	std::string body;
+
+// 	// if cgi
+// 	if (request.isCGI())
+// 	{
+// 		CGIHandler cgiHandler = CGIHandler(request.getPath());
+// 		if (cgiHandler.executeScript(request.getCGIPath()))
+// 		{
+// 			_statusCode = 200; // OK
+// 			return (cgiHandler.getScriptExecutionOutput());
+// 		}
+// 		else if (cgiHandler.isInfLoop())
+// 		{
+// 			_statusCode = 508; // Internal Server Error
+// 			return ("");
+// 		}
+// 		else
+// 		{
+// 			_statusCode = 500; // Internal Server Error
+// 			return ("");
+// 		}
+// 	}
+
+// 	else
+// 	{
+// 		std::string _root = "./"; // TODO come from config parser
+// 		std::string path = _root + request.getPath();
+// 		std::cout << "path : " << path << std::endl;
+// 		std::ifstream file;
+// 		file.open(path.c_str(), std::ios::in);
+// 		if (!file.is_open())
+// 		{
+// 			std::cerr << "Error opening file" << std::endl;
+// 			_statusCode = 404; // Not Found
+// 			return ("");
+// 		}
+// 		std::string line;
+// 		while (std::getline(file, line))
+// 			body += line;
+// 		file.close();
+// 		return (body);
+// 	}
+// }
+
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {
 	std::string headers;

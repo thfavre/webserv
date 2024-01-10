@@ -22,7 +22,7 @@ int main(int ac, char **av)
 		ServerManager	serverManager(parse.getServersParsed());
 		serverManager.launchServers();
 	} catch (std::exception &e) {
-		std::cerr << e.what() << std::endl;
+		std::cerr << RED << e.what() << RESET << std::endl;
 		return 1;
 	}
 	return 0;
