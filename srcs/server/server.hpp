@@ -37,14 +37,14 @@ class Server
 	public:
 		Server();
 		Server(const t_server &server_config);
+		Server(const Server &src);
 		~Server();
-		// Server(const Server &src);
 		// Server	&operator=(const Server &src);
 
 		void		setup();
 		int			acceptClient(int server_fd);
 		std::string	handleRequest(int fd, bool *keep_alive);
-		void		sendResponse(int fd, std::string response);
+		int			sendResponse(int fd, std::string response);
 		void		run();
 		void		closeSingle(const int &index);
 		void		closeAll();

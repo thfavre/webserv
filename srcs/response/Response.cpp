@@ -58,9 +58,9 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	// formart cgi response (read the output of the cgi from a pipe)
 	// else
 	this->_response = _formatResponse(request);
-	std::cout << "**Response : \n"
-			  << std::endl
-			  << this->_response << std::endl;
+	// std::cout << "**Response : \n"
+	// 		  << std::endl
+	// 		  << this->_response << std::endl;
 	// _sendResponse(socketFd, response);
 }
 
@@ -95,49 +95,103 @@ std::string Response::_formatResponse(const HTTPRequest &request)
 
 std::string Response::_setBody(const HTTPRequest &request)
 {
-	std::string body;
+    std::string body;
 
-	// if cgi
-	if (request.isCGI())
-	{
-		CGIHandler cgiHandler = CGIHandler(request.getPath());
-		if (cgiHandler.executeScript(request.getCGIPath()))
-		{
-			_statusCode = 200; // OK
-			return (cgiHandler.getScriptExecutionOutput());
-		}
-		else if (cgiHandler.isInfLoop())
-		{
-			_statusCode = 508; // Internal Server Error
-			return ("");
-		}
-		else
-		{
-			_statusCode = 500; // Internal Server Error
-			return ("");
-		}
-	}
+    // if CGI
+    if (request.isCGI())
+    {
+        CGIHandler cgiHandler = CGIHandler(request.getPath());
+        if (cgiHandler.executeScript(request.getCGIPath()))
+        {
+            _statusCode = 200; // OK
+            return cgiHandler.getScriptExecutionOutput();
+        }
+        else if (cgiHandler.isInfLoop())
+        {
+            _statusCode = 508; // Loop Detected
+            return "";
+        }
+        else
+        {
+            _statusCode = 500; // Internal Server Error
+            return "";
+        }
+    }
+    else
+    {
+        std::string root = "./"; // TODO: Retrieve from config parser
+        std::string path = root + request.getPath();
+        std::cout << "Path: " << path << std::endl;
 
-	else
-	{
-		std::string _root = "./"; // TODO come from config parser
-		std::string path = _root + request.getPath();
-		std::cout << "path : " << path << std::endl;
-		std::ifstream file;
-		file.open(path.c_str(), std::ios::in);
-		if (!file.is_open())
-		{
-			std::cerr << "Error opening file" << std::endl;
-			_statusCode = 404; // Not Found
-			return ("");
-		}
-		std::string line;
-		while (std::getline(file, line))
-			body += line;
-		file.close();
-		return (body);
-	}
+        std::ifstream file(path);
+        if (!file.is_open())
+        {
+            std::cerr << "Error opening file: " << path << std::endl;
+            _statusCode = 404; // Not Found
+            return "";
+        }
+
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        file.close();
+
+        if (file.fail() && !file.eof())
+        {
+            std::cerr << "Error reading from file: " << path << std::endl;
+            _statusCode = 500; // Internal Server Error
+            return "";
+        }
+
+        return buffer.str();
+    }
 }
+
+
+// std::string Response::_setBody(const HTTPRequest &request)
+// {
+// 	std::string body;
+
+// 	// if cgi
+// 	if (request.isCGI())
+// 	{
+// 		CGIHandler cgiHandler = CGIHandler(request.getPath());
+// 		if (cgiHandler.executeScript(request.getCGIPath()))
+// 		{
+// 			_statusCode = 200; // OK
+// 			return (cgiHandler.getScriptExecutionOutput());
+// 		}
+// 		else if (cgiHandler.isInfLoop())
+// 		{
+// 			_statusCode = 508; // Internal Server Error
+// 			return ("");
+// 		}
+// 		else
+// 		{
+// 			_statusCode = 500; // Internal Server Error
+// 			return ("");
+// 		}
+// 	}
+
+// 	else
+// 	{
+// 		std::string _root = "./"; // TODO come from config parser
+// 		std::string path = _root + request.getPath();
+// 		std::cout << "path : " << path << std::endl;
+// 		std::ifstream file;
+// 		file.open(path.c_str(), std::ios::in);
+// 		if (!file.is_open())
+// 		{
+// 			std::cerr << "Error opening file" << std::endl;
+// 			_statusCode = 404; // Not Found
+// 			return ("");
+// 		}
+// 		std::string line;
+// 		while (std::getline(file, line))
+// 			body += line;
+// 		file.close();
+// 		return (body);
+// 	}
+// }
 
 std::string Response::_setHeaders(const HTTPRequest &request, int bodyLength)
 {

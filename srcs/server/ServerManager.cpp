@@ -15,9 +15,9 @@ ServerManager::ServerManager(std::vector<t_server> serverConfigs) : _serverConfi
 ServerManager::~ServerManager()
 {
 	stopServers();
-	this->_serverConfigs.clear();
-	this->_fds.clear();
-	this->_servers.clear();
+	// this->_serverConfigs.clear();
+	// this->_fds.clear();
+	// this->_servers.clear();
 }
 
 
@@ -32,7 +32,7 @@ void	ServerManager::launchServers()
 		}
 
 		if (poll(tempPollfds.data(), tempPollfds.size(), 1000) < 0)
-			throw std::runtime_error("Poll issue");
+			throw std::runtime_error("[EXCEPTION] Poll issue");
 
 			// Check for events
 		for (size_t i = 0; i < tempPollfds.size(); ++i)
@@ -45,7 +45,7 @@ void	ServerManager::launchServers()
 					// Handle listening socket event
 					int client_fd = tmpServ.acceptClient(this->_fds[i].pfd.fd);
 					this->_fds.push_back(makeEpfd(client_fd, this->_fds[i].server_name, false));
-					checkLogs(this->_fds);
+					// checkLogs(this->_fds);
 				} else {
 					// Handle client socket event
 					//TODO: might need to close the socket if request says "close" in the header
@@ -65,7 +65,10 @@ void	ServerManager::launchServers()
 			else if (tempPollfds[i].revents & POLLOUT)
 			{
 				// Handle sending response to client
-				tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response);
+				if (tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response) == 0)
+				{
+					closeSingleSocket(i);
+				}
 				if (!this->_fds[i].keep_alive)
 					closeSingleSocket(i);
 				else
@@ -75,9 +78,7 @@ void	ServerManager::launchServers()
 			{
 				// Handle poll errors
 				closeSingleSocket(i);
-				std::cout << "Closing socket " << i << " because of POLLERR | POLLHUP" << std::endl;
-				// close(this->_fds[i].pfd.fd);
-				// this->_fds.erase(this->_fds.begin() + i);
+				std::cout << RED << "[ERROR] Closing socket " << i << " because of POLLERR | POLLHUP" << RESET << std::endl;
 			}
 		}
 	}
@@ -90,7 +91,7 @@ Server		&ServerManager::getServerByName(std::string &name)
 		if (it->getName() == name)
 			return *it;
 	}
-	throw std::runtime_error("Can not find the server by its name");
+	throw std::runtime_error("[EXCEPTION] Can not find the server by its name");
 }
 
 ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bool is_listening_socket)
@@ -112,9 +113,18 @@ void		ServerManager::stopServers()
 {
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
-		if (this->_fds[i].pfd.fd >= 0) {
-			close(this->_fds[i].pfd.fd);
-			this->_fds[i].pfd.fd = UNSET;
+		if (this->_fds[i].pfd.fd >= 0)
+		{
+			// Check if the file descriptor is still valid
+			if (close(this->_fds[i].pfd.fd) < 0)
+			{
+				// Handle the case where closing the file descriptor fails
+				perror("Error closing file descriptor");
+			}
+			else
+			{
+				this->_fds[i].pfd.fd = UNSET;
+			}
 		}
 	}
 }
@@ -125,7 +135,10 @@ void		ServerManager::closeSingleSocket(int index)
 		return;
 	if (this->_fds[index].pfd.fd >= 0)
 	{
-		close(this->_fds[index].pfd.fd);
+		if (close(this->_fds[index].pfd.fd) < 0)
+			std::cerr << RED << "[ERROR] when closing the fd " << this->_fds[index].pfd.fd << RESET << std::endl;
+		else
+			std::cout << YELLOW << "[SOCKET] Closing socket " << index << RESET << std::endl;
 		this->_fds[index].pfd.fd = UNSET;
 	}
 	this->_fds.erase(this->_fds.begin() + index);
@@ -138,5 +151,6 @@ void		ServerManager::checkLogs(std::vector<struct epfd> fds)
 	for (size_t i = 0; i < fds.size(); i++)
 	{
 		std::cout << "FD " << fds[i].pfd.fd << " (listening: " << fds[i].is_listening_socket << ", name: " << fds[i].server_name << std::endl;
+		std::cout << "events of the fd " << fds[i].pfd.events << std::endl;
 	}
 }
