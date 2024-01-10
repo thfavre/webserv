@@ -55,6 +55,7 @@ std::string getStatusCodeMessage(int statusCode) // ! TODO find a better way to 
 
 Response::Response(const HTTPRequest &request, int socketFd, const t_server &server) : _server(server)
 {
+	(void) socketFd; //TODO: remove it as it is not needed anymore
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 	_statusCode = request.getStatusCode();
 	std::string response = _formatResponse(request);
@@ -66,7 +67,7 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	std::cout << response.substr(0, 1000) << std::endl;
 	std::cout << LOG_COLOR << "[LOG] End of response" << RESET << std::endl;
 
-	_sendResponse(socketFd, response);
+	//_sendResponse(socketFd, response);
 }
 
 std::string Response::_formatResponse(const HTTPRequest &request)
@@ -321,7 +322,7 @@ bool Response::_isError()
 }
 
 // /* ****** Getters ****** */
-// const std::string Response::getResponse() const
-// {
-// 	return (_response);
-// }
+const std::string Response::getResponse() const
+{
+	return (_response);
+}

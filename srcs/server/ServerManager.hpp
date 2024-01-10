@@ -7,17 +7,28 @@
 
 class ServerManager
 {
-	std::vector<t_server>	_serverConfigs;
-	std::vector<Server>		_servers;
-	std::vector<int>		_childPids;
+	struct epfd {
+		pollfd		pfd;
+		std::string	server_name;
+		bool		is_listening_socket;
+		std::string	response;
+	};
+
+	std::vector<t_server>		_serverConfigs;
+	std::vector<Server>			_servers;
+	std::vector<struct epfd>	_fds;
+
 	ServerManager();
+	void	closeSingleSocket();
+	void	stopServers();
 
 	public:
 		ServerManager(std::vector<t_server> serverConfigs);
 		~ServerManager();
 
-		void	launchServers();
-		void	stopServers();
+		void		launchServers();
+		epfd		makeEpfd(int fd, std::string server_name, bool is_listening_socket);
+		Server		&getServerByName(std::string &name);
 };
 
 #endif

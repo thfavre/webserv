@@ -10,19 +10,18 @@ class Response
 {
 	public:
 		Response(const HTTPRequest &request, int socketFd, const t_server &server);
-		// const std::string getResponse() const;
+		const std::string getResponse() const;
 
 	private:
 		std::string _httpProtocolVersion;
 		int _statusCode;
 		t_server _server;
-
 		std::string _contentType;
 		std::string _getContentType(const std::string &path);
+		std::string _response; // ! TODO used?
 		// std::string _statusMessage;
 		// std::map<std::string, std::string> _headers;
 		// std::string _body;
-		// std::string _response;
 
 		std::string _formatResponse(const HTTPRequest &request);
 		std::string _formatGenericErrorPageHTML();

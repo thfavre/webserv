@@ -2,69 +2,112 @@
 
 ServerManager::ServerManager(std::vector<t_server> serverConfigs) : _serverConfigs(serverConfigs)
 {
-
-}
-
-ServerManager::~ServerManager()
-{
-
-}
-
-// void	ServerManager::launchServers()
-// {
-// 	for (std::vector<t_server>::const_iterator it = _serverConfigs.begin(); it != _serverConfigs.end(); ++it)
-// 	{
-// 		const t_server& config = *it;
-
-// 		Server server(config);
-// 		server.setup();
-// 		server.run();
-// 		_servers.push_back(server);
-// 	}
-// }
-
-void	ServerManager::launchServers()
-{
 	for (std::vector<t_server>::const_iterator it = _serverConfigs.begin(); it != _serverConfigs.end(); ++it)
 	{
 		const t_server& config = *it;
 
 		Server server(config);
-		server.setup();
-
-		int pid = fork();
-		if (pid == 0) {
-			// Child process
-			server.run();
-			return;
-		} else if (pid < 0) {
-			perror("issue with the forking");
-			//throw MyException(ErrorType::FORK, "issue when forking the server at creation");
-			return;
-		} else {
-			// Parent process
-			_childPids.push_back(pid);
-			_servers.push_back(std::move(server));
-		}
+		this->_fds.push_back(makeEpfd(server.getListeningSocket(), server.getName(), true));
+		_servers.push_back(server);
 	}
+}
 
-	for (std::vector<Server>::iterator i = _servers.begin(); i != _servers.end();)
+ServerManager::~ServerManager()
+{
+	stopServers();
+	this->_serverConfigs.clear();
+	this->_fds.clear();
+	this->_servers.clear();
+}
+
+
+void	ServerManager::launchServers()
+{
+	while (true)
 	{
-		if (waitpid((*i).getPid(), NULL, 0) == -1)
+		std::vector<pollfd> tempPollfds;
+		for (std::vector<epfd>::const_iterator it = this->_fds.begin(); it != this->_fds.end(); ++it)
 		{
-			perror("waitpid() failed");
-			_servers.erase(i);
+			tempPollfds.push_back(it->pfd);
 		}
-		else
+
+		if (poll(tempPollfds.data(), tempPollfds.size(), 1000) < 0)
+			throw std::runtime_error("Poll issue");
+
+			// Check for events
+		for (size_t i = 0; i < tempPollfds.size(); ++i)
 		{
-			i++;
+			Server	tmpServ = getServerByName(this->_fds[i].server_name);
+			if (tempPollfds[i].revents & POLLIN)
+			{
+				if (this->_fds[i].is_listening_socket == true)
+				{
+					// Handle listening socket event
+					int client_fd = tmpServ.acceptClient(this->_fds[i].pfd.fd);
+					this->_fds.push_back(makeEpfd(client_fd, this->_fds[i].server_name, false));
+				} else {
+					// Handle client socket event
+					this->_fds[i].response = tmpServ.handleRequest(this->_fds[i].pfd.fd);
+					if (this->_fds[i].response.empty())
+					{
+						//TODO: closing the socket or closing the program in itself ??
+						throw std::runtime_error("Issue getting request from client");
+					}
+					this->_fds[i].pfd.events = POLLOUT;
+				}
+			}
+			else if (tempPollfds[i].revents & POLLOUT)
+			{
+				// Handle sending response to client
+				tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response);
+				this->_fds[i].pfd.events = POLLIN;
+			}
+			else if (tempPollfds[i].revents & (POLLERR | POLLHUP))
+			{
+				// Handle poll errors
+				close(this->_fds[i].pfd.fd);
+				this->_fds.erase(this->_fds.begin() + i);
+			}
 		}
 	}
 }
 
+Server		&ServerManager::getServerByName(std::string &name)
+{
+	for (std::vector<Server>::iterator	it = this->_servers.begin(); it != this->_servers.end(); ++it)
+	{
+		if (it->getName() == name)
+			return *it;
+	}
+	throw std::runtime_error("Can not find the server by its name");
+}
+
+ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bool is_listening_socket)
+{
+	epfd	newEpfd;
+
+	newEpfd.pfd.fd = fd;
+	newEpfd.pfd.events = POLLIN;
+	newEpfd.pfd.revents = 0;
+	newEpfd.server_name = server_name;
+	newEpfd.is_listening_socket = is_listening_socket;
+	newEpfd.response = "";
+
+	return newEpfd;
+}
+
 void	ServerManager::stopServers()
 {
-	for (size_t i = 0; i < this->_servers.size(); ++i) {
-		this->_servers[i].end();
+	for (size_t i = 0; i < _fds.size(); ++i)
+	{
+		if (this->_fds[i].pfd.fd >= 0) {
+			close(this->_fds[i].pfd.fd);
+			this->_fds[i].pfd.fd = UNSET;
+		}
 	}
+}
+
+void	ServerManager::closeSingleSocket()
+{
+
 }
