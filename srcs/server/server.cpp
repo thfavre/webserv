@@ -22,11 +22,12 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 		throw std::runtime_error("setsockopt() failed");
 	}
 
-	memset(&this->_sockaddr, 0, sizeof(this->_sockaddr));
-	this->_sockaddr.sin_family = AF_INET;
-	this->_sockaddr.sin_port = htons(this->_server_config.port);
-	this->_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	this->_sockaddr_len = sizeof(this->_sockaddr);
+	sockaddr_in	tmp_sockaddr;
+	tmp_sockaddr.sin_family = AF_INET;
+	tmp_sockaddr.sin_port = htons(this->_server_config.port);
+	tmp_sockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	this->_sockaddr = tmp_sockaddr;
+	this->_sockaddr_len = sizeof(tmp_sockaddr);
 
 	if (bind(this->_listening_socket, (struct sockaddr *) &this->_sockaddr, this->_sockaddr_len) < 0)
 	{
@@ -60,7 +61,7 @@ int			Server::acceptClient(int server_fd)
 
 	int	client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len);
 	if (client_fd < 0)
-		throw std::runtime_error("Issue acceptiing new connection");
+		throw std::runtime_error("Issue accepting new connection");
 
 	if (fcntl(client_fd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("Issue setting client_fd to unblocking");
