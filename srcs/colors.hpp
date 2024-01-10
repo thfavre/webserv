@@ -12,6 +12,7 @@
 # define WHITE		"\033[37m"
 
 # define LOG_COLOR	CYAN
+# define LOG_COLOR2	YELLOW
 # define ERR_COLOR	RED
 
 #endif // COLORS_HPP

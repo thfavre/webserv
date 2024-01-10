@@ -8,7 +8,11 @@
 #include "split.hpp"
 #include "checkFileExists.hpp"
 
+#include "../colors.hpp"
+
 #define LINE_END "\r\n"
+
+
 
 #define YELLOW "\033[33m" // TODO delete
 #define CYAN "\033[36m"
@@ -55,20 +59,18 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 			if (_configRootOptions.find("cgi") != _configRootOptions.end())
 			{
 				std::vector<std::string> cgi = split(_configRootOptions["cgi"], " ");
-				if (cgi.size() != 2) // ? TODO Does @Bastien make the check in the config parser ?
+				if (cgi.size() != 2)
 				{
 					_statusCode = 500;
 					throw HTTPRequest::InvalidRequestException("Invalid CGI config");
 				}
-				// if the path have the same extension as the cgi config
-				// remove the .
 				if (cgi[0][0] == '.')
 					cgi[0].erase(0, 1);
 				if (cgi[0] == CGIHandler(_requestPath).getExtension())
 				{
 					_CGIPath = cgi[1];
 					_isCGI = true;
-					std::cout << RED << "CGI" << RESET << std::endl;
+					std::cout << LOG_COLOR << "[LOG] The file is a CGI" << RESET << "(path: " << _CGIPath << ")" << std::endl;
 				}
 				else
 				{
@@ -97,7 +99,10 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 void HTTPRequest::_parseRequest(std::string requestData)
 {
 
-	std::cout << "**Request :\n" << requestData << std::endl;
+	std::cout << LOG_COLOR << "[LOG] Rquest :" << RESET << std::endl;
+	std::cout << requestData << std::endl;
+	std::cout << LOG_COLOR << "[LOG] End of request" << RESET << std::endl;
+
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
 	// add empty body if the body is empty
 	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
@@ -159,9 +164,6 @@ void HTTPRequest::_parseMethod(const std::string &method)
 		_statusCode = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
 	}
-	// print the config methods in color
-	std::cout << YELLOW << "config methods: " << RESET;
-	std::cout << _configRootOptions["methods"] << std::endl;
 	// check if method is allowed by the config
 	// TODO get a getter from config
 	if (_configRootOptions.find("methods") != _configRootOptions.end())
@@ -206,8 +208,6 @@ void HTTPRequest::_parsePath(std::string path)
 	// TODO check redirections
 	path = _getRedirectedPath(path);
 
-	// std::cout << YELLOW << "_configRootOptions['root']: " << _configRootOptions["root"] << RESET << path << std::endl;
-	std::cout << YELLOW << "path: " << RESET << path << std::endl;
 
 	// if (path.empty())
 	// {
@@ -234,7 +234,7 @@ void HTTPRequest::_parsePath(std::string path)
 
 
 // TODO remove the return
-std::string HTTPRequest::_getConfigRootOptions(const std::string &requestPath) // TODO rename TODO (Should be a getter in the config) TODO find a better name?
+void HTTPRequest::_getConfigRootOptions(const std::string &requestPath) // TODO rename TODO (Should be a getter in the config) TODO find a better name?
 {
 	std::string path = requestPath;
 	std::map<std::string, std::string> options;
@@ -243,37 +243,20 @@ std::string HTTPRequest::_getConfigRootOptions(const std::string &requestPath) /
 		for (std::map<std::string, std::map<std::string, std::string> >::const_iterator route = _server.routes.begin();
 			 route != _server.routes.end(); ++route)
 		{
-			// std::cout << "route->first: " << route->first << std::endl;
-			// std ::cout << "\tpath: " << path << std::endl;
 			if (path == route->first)
 			{
 				options = route->second;
-				std::cout << YELLOW << "options: " << RESET << std::endl;
+				std::cout << LOG_COLOR << "[LOG] Route found with options: " << RESET << std::endl;
 				for (std::map<std::string, std::string>::const_iterator option = options.begin();
 					 option != options.end(); ++option)
 				{
-					std::cout << CYAN << option->first << ": " << RESET << option->second << std::endl;
+					std::cout << LOG_COLOR2 << "\t" << option->first << ": " << RESET << option->second << std::endl;
 				}
 				_configRootOptions = options;
 				// requestPath // /thomas/index.html
 				_configRoute = path; // /thomas
-				// si requestPath == _configRoute :
-				// et si redirection dans le configRootOptions
-				// requestPath = redirection
-				std::cout << YELLOW << "requestPath: " << RESET << requestPath << std::endl;
-				std::cout << YELLOW << "_configRoute: " << RESET << _configRoute << std::endl;
-				std::cout << YELLOW << "_configRootOptions['root']: " << RESET << _configRootOptions["root"] << std::endl;
 
-				// ! TODO is root mendaotry ?
-				// if (_configRootOptions.find("root") == _configRootOptions.end())
-				// {
-				// 	_statusCode = 400; // Bad Request
-				// 	throw HTTPRequest::InvalidRequestException("Path (or subpath) does not have a root option");
-				// }
-				std::cout << YELLOW << "requestPath.substr(path.length()): " << RESET << requestPath.substr(path.length()) << std::endl;
-				// _configRootOptions["root"] + requestPath.substr(path.length()); // ! TODO path to the file
-				std::cout << YELLOW << "total path : " << RESET << _configRootOptions["root"] + requestPath.substr(path.length()) << std::endl;
-				return requestPath.substr(path.length());
+				return ;
 				// for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
 				// 	 option != route->second.end(); ++option)
 				// {
@@ -306,14 +289,14 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 			redirection = _configRootOptions["redirection"];
 			_statusCode = 301;
 
-			std::cout << GREEN << "redirection: " << RESET << redirection << std::endl;
+			std::cout << LOG_COLOR << "[LOG] The path is redirected to: " << RESET << redirection << std::endl;
 			return (redirection);
 		}
 		else if (_configRootOptions.find("index") != _configRootOptions.end())
 		{
 			// redirection = path + "/" + _configRootOptions["index"];
 			redirection = "/" + _configRootOptions["index"];
-			std::cout << GREEN << "index: " << RESET << redirection << std::endl;
+			std::cout << LOG_COLOR << "[LOG] Index found, the path is redirected to: " << RESET << redirection << std::endl;
 			return (redirection);
 		}
 	}
@@ -329,50 +312,6 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 
 	return (redirection);
 }
-
-// {
-
-// 	std::string redirection = path;
-// 	_configRootOptions
-
-// std::string redirection = path;
-// std::cout << "path: " << path << std::endl;
-// // for root in config_roots
-// // 	if (path == root.path)
-// // 		redirection = root.redirection;
-
-// // iterate in std::map<std::string, std::map<std::string, std::string> >	routes;
-// // TODO make a function to do that
-// for (std::map<std::string, std::map<std::string, std::string>>::const_iterator route = _server.routes.begin();
-// 	 route != _server.routes.end(); ++route)
-// {
-// 	std::cout << "route->first: " << route->first << std::endl;
-// 	if (path == route->first)
-// 	{
-// 		for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
-// 			 option != route->second.end(); ++option)
-// 		{
-// 			std::cout << "option->first: " << option->first << std::endl;
-// 			if (option->first == "redirection")
-// 			{
-// 				std::cout << "redirection option->second: " << option->second << std::endl;
-// 				redirection = option->second;
-// 				_statusCode = 301;
-// 				break;
-// 			}
-// 			if (option->first == "index")
-// 			{
-// 				std::cout << "index option->second: " << option->second << std::endl;
-// 				// redirection = path + "/" + option->second;
-// 				// _statusCode = 301;
-// 				redirection = option->second;
-// 				break;
-// 			}
-// 		}
-// 	}
-// }
-// return (redirection);
-// }
 
 void HTTPRequest::_parseHttpProtocolVersion(const std::string &httpProtocolVersion)
 {
