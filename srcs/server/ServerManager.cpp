@@ -15,9 +15,9 @@ ServerManager::ServerManager(std::vector<t_server> serverConfigs) : _serverConfi
 ServerManager::~ServerManager()
 {
 	stopServers();
-	// this->_serverConfigs.clear();
-	// this->_fds.clear();
-	// this->_servers.clear();
+	this->_serverConfigs.clear();
+	this->_fds.clear();
+	this->_servers.clear();
 }
 
 
@@ -26,16 +26,18 @@ void	ServerManager::launchServers()
 	while (true)
 	{
 		std::vector<pollfd> tempPollfds;
-		for (std::vector<epfd>::const_iterator it = this->_fds.begin(); it != this->_fds.end(); ++it)
+		size_t	vectorSize = this->_fds.size();
+
+		for (size_t i = 0; i < vectorSize; ++i)
 		{
-			tempPollfds.push_back(it->pfd);
+			tempPollfds.push_back(this->_fds[i].pfd);
 		}
 
-		if (poll(tempPollfds.data(), tempPollfds.size(), 1000) < 0)
+		if (poll(tempPollfds.data(), tempPollfds.size(), 100000) < 0)
 			throw std::runtime_error("[EXCEPTION] Poll issue");
 
 			// Check for events
-		for (size_t i = 0; i < tempPollfds.size(); ++i)
+		for (size_t i = 0; i < vectorSize; ++i)
 		{
 			Server	tmpServ = getServerByName(this->_fds[i].server_name);
 			if (tempPollfds[i].revents & POLLIN)
@@ -45,7 +47,6 @@ void	ServerManager::launchServers()
 					// Handle listening socket event
 					int client_fd = tmpServ.acceptClient(this->_fds[i].pfd.fd);
 					this->_fds.push_back(makeEpfd(client_fd, this->_fds[i].server_name, false));
-					// checkLogs(this->_fds);
 				} else {
 					// Handle client socket event
 					//TODO: might need to close the socket if request says "close" in the header
@@ -84,7 +85,7 @@ void	ServerManager::launchServers()
 	}
 }
 
-Server		&ServerManager::getServerByName(std::string &name)
+Server		&ServerManager::getServerByName(const std::string &name)
 {
 	for (std::vector<Server>::iterator	it = this->_servers.begin(); it != this->_servers.end(); ++it)
 	{
@@ -96,7 +97,7 @@ Server		&ServerManager::getServerByName(std::string &name)
 
 ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bool is_listening_socket)
 {
-	epfd	newEpfd;
+	epfd	newEpfd(server_name, "");
 
 	newEpfd.pfd.fd = fd;
 	newEpfd.pfd.events = POLLIN;
@@ -104,7 +105,7 @@ ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bo
 	newEpfd.server_name = server_name;
 	newEpfd.is_listening_socket = is_listening_socket;
 	newEpfd.keep_alive = true;
-	newEpfd.response = "";
+	// newEpfd.response = "";
 
 	return newEpfd;
 }

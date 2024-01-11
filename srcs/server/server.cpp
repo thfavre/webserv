@@ -88,8 +88,6 @@ std::string	Server::handleRequest(int fd, bool *keep_alive)
 	if (bytes_received == NO_SIGNAL)
 	{
 		std::cerr << RED << "[ERROR] No signal received from client on fd " << fd << ": " << strerror(errno) << RESET << std::endl;
-		std::cout << "bytes received in case of error " << bytes_received << std::endl;
-		std::cout << "and here is the fd related " << fd << std::endl;
 		// std::cerr << RED << "[ERROR] No response made, closing the socket at index " << i << " It has an fd of " << this->_fds[i].pfd.fd << RESET << std::endl;
 		return (std::string());
 	}

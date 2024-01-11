@@ -59,6 +59,7 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	_httpProtocolVersion = request.getHttpProtocolVersion(); // TODO variable not needed...?
 	_statusCode = request.getStatusCode();
 	std::string response = _formatResponse(request);
+	this->_response = response;
 
 	// Log infos
 	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " bytes):" << std::endl;
