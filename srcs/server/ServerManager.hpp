@@ -15,8 +15,11 @@ class ServerManager
 		std::string	response;
 
 		epfd(std::string name, std::string response)
-			: pfd(), server_name(std::move(name)), is_listening_socket(false), keep_alive(true), response(std::move(response)) {}
-		~epfd() {}
+			: pfd(), server_name(name), is_listening_socket(false), keep_alive(true), response(response) {}
+		~epfd() {
+			server_name.clear();
+			response.clear();
+		}
 	};
 
 	std::vector<t_server>		_serverConfigs;
@@ -24,8 +27,10 @@ class ServerManager
 	std::vector<struct epfd>	_fds;
 
 	ServerManager();
-	void	closeSingleSocket(int index);
+	void	closeSingleSocket(std::vector<epfd>::reverse_iterator it);
 	void	stopServers();
+	void	syncTmpfdsToFds(std::vector<pollfd>& tempPollfds);
+	void	syncFdsToTmpfds(const std::vector<pollfd>& tempPollfds);
 
 	public:
 		ServerManager(std::vector<t_server> serverConfigs);
@@ -36,7 +41,8 @@ class ServerManager
 		void			launchServers();
 		epfd			makeEpfd(int fd, std::string server_name, bool is_listening_socket);
 		Server			&getServerByName(const std::string &name);
-		void			checkLogs(std::vector<struct epfd> fds);
+		void			checkLogs(std::vector<struct epfd> fds, std::string where);
+		void			printVectors(const std::vector<pollfd>& vec1, const std::vector<epfd>& vec2);
 };
 
 #endif

@@ -110,8 +110,6 @@ std::string	Server::handleRequest(int fd, bool *keep_alive)
 	}
 
 	std::string raw_request(request_buffer, bytes_received);
-	//TODO: Should I [LOG] the request ??
-
 	HTTPRequest	request(raw_request, _server_config);
 	Response response(request, fd, _server_config);
 
