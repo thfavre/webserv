@@ -12,6 +12,12 @@ ServerManager::ServerManager(std::vector<t_server> serverConfigs) : _serverConfi
 	}
 }
 
+ServerManager::ServerManager(const ServerManager &src)
+{
+	this->_serverConfigs = src._serverConfigs;
+	this->_servers = src._servers;
+}
+
 ServerManager::~ServerManager()
 {
 	stopServers();
@@ -20,6 +26,15 @@ ServerManager::~ServerManager()
 	this->_servers.clear();
 }
 
+ServerManager	&ServerManager::operator=(const ServerManager &src)
+{
+	if (this != &src)
+	{
+		this->_serverConfigs = src._serverConfigs;
+		this->_servers = src._servers;
+	}
+	return *this;
+}
 
 void	ServerManager::launchServers()
 {
@@ -66,14 +81,14 @@ void	ServerManager::launchServers()
 			else if (tempPollfds[i].revents & POLLOUT)
 			{
 				// Handle sending response to client
-				if (tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response) == 0)
+				if ((tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response) == 0) || (!this->_fds[i].keep_alive))
 				{
 					closeSingleSocket(i);
 				}
-				if (!this->_fds[i].keep_alive)
-					closeSingleSocket(i);
 				else
+				{
 					this->_fds[i].pfd.events = POLLIN;
+				}
 			}
 			else if (tempPollfds[i].revents & (POLLERR | POLLHUP))
 			{
@@ -110,40 +125,95 @@ ServerManager::epfd		ServerManager::makeEpfd(int fd, std::string server_name, bo
 	return newEpfd;
 }
 
-void		ServerManager::stopServers()
+void ServerManager::stopServers()
 {
-	for (size_t i = 0; i < _fds.size(); ++i)
-	{
-		if (this->_fds[i].pfd.fd >= 0)
-		{
-			// Check if the file descriptor is still valid
-			if (close(this->_fds[i].pfd.fd) < 0)
-			{
-				// Handle the case where closing the file descriptor fails
-				perror("Error closing file descriptor");
-			}
-			else
-			{
-				this->_fds[i].pfd.fd = UNSET;
-			}
-		}
-	}
+    std::vector<size_t> indicesToErase;
+
+    for (size_t i = 0; i < _fds.size(); ++i)
+    {
+        if (this->_fds[i].pfd.fd >= 0)
+        {
+            // Check if the file descriptor is still valid
+            if (close(this->_fds[i].pfd.fd) < 0)
+            {
+                // Handle the case where closing the file descriptor fails
+                perror("Error closing file descriptor");
+            }
+            else
+            {
+                this->_fds[i].pfd.fd = UNSET;
+            }
+
+            // Clear 'response' before erasing the element
+            this->_fds[i].response.clear();
+
+            indicesToErase.push_back(i);
+        }
+    }
+
+    // Erase elements outside the loop to avoid iterator invalidation
+    for (std::vector<size_t>::reverse_iterator it = indicesToErase.rbegin(); it != indicesToErase.rend(); ++it)
+    {
+        this->_fds.erase(this->_fds.begin() + *it);
+    }
 }
 
-void		ServerManager::closeSingleSocket(int index)
-{
-	if (index < 0 || static_cast<size_t>(index) >= this->_fds.size())
-		return;
-	if (this->_fds[index].pfd.fd >= 0)
-	{
-		if (close(this->_fds[index].pfd.fd) < 0)
-			std::cerr << RED << "[ERROR] when closing the fd " << this->_fds[index].pfd.fd << RESET << std::endl;
-		else
-			std::cout << YELLOW << "[SOCKET] Closing socket " << index << RESET << std::endl;
-		this->_fds[index].pfd.fd = UNSET;
-	}
-	this->_fds.erase(this->_fds.begin() + index);
+
+
+
+// void		ServerManager::stopServers()
+// {
+// 	for (size_t i = 0; i < _fds.size(); ++i)
+// 	{
+// 		if (this->_fds[i].pfd.fd >= 0)
+// 		{
+// 			// Check if the file descriptor is still valid
+// 			if (close(this->_fds[i].pfd.fd) < 0)
+// 			{
+// 				// Handle the case where closing the file descriptor fails
+// 				perror("Error closing file descriptor");
+// 			}
+// 			else
+// 			{
+// 				this->_fds[i].pfd.fd = UNSET;
+// 			}
+// 		}
+// 	}
+// }
+
+void ServerManager::closeSingleSocket(int index) {
+	checkLogs(this->_fds);
+    if (index < 0 || static_cast<size_t>(index) >= this->_fds.size()) {
+        std::cerr << RED << "[ERROR] Invalid index for closeSingleSocket: " << index << RESET << std::endl;
+        return;
+    }
+
+    if (this->_fds[index].pfd.fd >= 0) {
+        std::cout << YELLOW << "[SOCKET] Closing socket " << this->_fds[index].pfd.fd << " at index " << index << RESET << std::endl;
+        if (close(this->_fds[index].pfd.fd) < 0)
+            std::cerr << RED << "[ERROR] when closing the fd " << this->_fds[index].pfd.fd << ": " << strerror(errno) << RESET << std::endl;
+        this->_fds[index].pfd.fd = UNSET;
+    }
+
+    this->_fds.erase(this->_fds.begin() + index);
+	checkLogs(this->_fds);
 }
+
+
+// void		ServerManager::closeSingleSocket(int index)
+// {
+// 	if (index < 0 || static_cast<size_t>(index) >= this->_fds.size())
+// 		return;
+// 	if (this->_fds[index].pfd.fd >= 0)
+// 	{
+// 		if (close(this->_fds[index].pfd.fd) < 0)
+// 			std::cerr << RED << "[ERROR] when closing the fd " << this->_fds[index].pfd.fd << RESET << std::endl;
+// 		else
+// 			std::cout << YELLOW << "[SOCKET] Closing socket " << index << RESET << std::endl;
+// 		this->_fds[index].pfd.fd = UNSET;
+// 	}
+// 	this->_fds.erase(this->_fds.begin() + index);
+// }
 
 
 void		ServerManager::checkLogs(std::vector<struct epfd> fds)
@@ -151,7 +221,7 @@ void		ServerManager::checkLogs(std::vector<struct epfd> fds)
 	std::cout << "-----Checking logs-----" << std::endl;
 	for (size_t i = 0; i < fds.size(); i++)
 	{
-		std::cout << "FD " << fds[i].pfd.fd << " (listening: " << fds[i].is_listening_socket << ", name: " << fds[i].server_name << std::endl;
-		std::cout << "events of the fd " << fds[i].pfd.events << std::endl;
+		std::cout << "FD " << fds[i].pfd.fd << ", index: " << i << std::endl;
+		// std::cout << "events of the fd " << fds[i].pfd.events << std::endl;
 	}
 }

@@ -51,14 +51,31 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 
 Server::Server(const Server &src)
 {
-	// Implement copying logic here, ensuring proper duplication of resources
 	this->_name = src._name;
+	this->_listening_socket = src._listening_socket;
+	this->_pid = src._pid;
+	this->_sockaddr_len = src._sockaddr_len;
 	this->_server_config = src._server_config;
+	this->_sockaddr = src._sockaddr;
 }
 
 Server::~Server()
 {
 
+}
+
+Server	&Server::operator=(const Server &src)
+{
+	if (this != &src)
+	{
+		this->_name = src._name;
+		this->_listening_socket = src._listening_socket;
+		this->_pid = src._pid;
+		this->_sockaddr_len = src._sockaddr_len;
+		this->_server_config = src._server_config;
+		this->_sockaddr = src._sockaddr;
+	}
+	return *this;
 }
 
 int			Server::acceptClient(int server_fd)

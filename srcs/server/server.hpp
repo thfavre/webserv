@@ -32,28 +32,18 @@ class Server
 	int						_sockaddr_len;
 	t_server				_server_config;
 	sockaddr_in				_sockaddr;
-	pollfd					_fds[MAX_CONNECTION];
+	// pollfd					_fds[MAX_CONNECTION];
 
+	Server();
 	public:
-		Server();
 		Server(const t_server &server_config);
 		Server(const Server &src);
 		~Server();
-		// Server	&operator=(const Server &src);
+		Server	&operator=(const Server &src);
 
-		void		setup();
 		int			acceptClient(int server_fd);
 		std::string	handleRequest(int fd, bool *keep_alive);
 		int			sendResponse(int fd, std::string response);
-		void		run();
-		void		closeSingle(const int &index);
-		void		closeAll();
-		void		end();
-
-		// int		getPollSig();
-		int			availableFd();
-		void		setPid(int pid);
-		int			getPid();
 		int			getListeningSocket();
 		std::string	getName();
 };

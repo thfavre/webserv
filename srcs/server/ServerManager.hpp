@@ -16,6 +16,7 @@ class ServerManager
 
 		epfd(std::string name, std::string response)
 			: pfd(), server_name(std::move(name)), is_listening_socket(false), keep_alive(true), response(std::move(response)) {}
+		~epfd() {}
 	};
 
 	std::vector<t_server>		_serverConfigs;
@@ -28,12 +29,14 @@ class ServerManager
 
 	public:
 		ServerManager(std::vector<t_server> serverConfigs);
+		ServerManager(const ServerManager &src);
 		~ServerManager();
+		ServerManager	&operator=(const ServerManager &src);
 
-		void		launchServers();
-		epfd		makeEpfd(int fd, std::string server_name, bool is_listening_socket);
-		Server		&getServerByName(const std::string &name);
-		void		checkLogs(std::vector<struct epfd> fds);
+		void			launchServers();
+		epfd			makeEpfd(int fd, std::string server_name, bool is_listening_socket);
+		Server			&getServerByName(const std::string &name);
+		void			checkLogs(std::vector<struct epfd> fds);
 };
 
 #endif
