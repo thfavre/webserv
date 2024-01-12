@@ -62,9 +62,9 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	this->_response = response;
 
 	// Log infos
-	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " bytes):" << std::endl;
+	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " char):" << std::endl;
 	if (response.length() > 1000)
-		std::cout << LOG_COLOR2 << "(Do only containes the 1000 first bytes)" << RESET << std::endl;
+		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first bytes)" << RESET << std::endl;
 	std::cout << response.substr(0, 1000) << std::endl;
 	std::cout << LOG_COLOR << "[LOG] End of response" << RESET << std::endl;
 
@@ -230,7 +230,6 @@ std::string Response::_setCGIBody(const std::string &path, const std::string &CG
 
 std::string Response::_setFileBody(const std::string &path)
 {
-	std::string body;
 	std::ifstream file;
 
 	file.open(path.c_str());
@@ -240,10 +239,9 @@ std::string Response::_setFileBody(const std::string &path)
 		_statusCode = 404; // Not Found
 		return ("");
 	}
-	std::string line;
-	while (std::getline(file, line))
-		body += line;
-	file.close();
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	std::string body = buffer.str();
 	return (body);
 
 }
