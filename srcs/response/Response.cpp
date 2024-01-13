@@ -64,7 +64,7 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	// Log infos
 	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " char):" << std::endl;
 	if (response.length() > 1000)
-		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first bytes)" << RESET << std::endl;
+		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first char)" << RESET << std::endl;
 	std::cout << response.substr(0, 1000) << std::endl;
 	std::cout << LOG_COLOR << "[LOG] End of response" << RESET << std::endl;
 

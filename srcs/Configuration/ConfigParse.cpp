@@ -177,7 +177,6 @@ size_t	ConfigParse::parseBodySize(std::string line)
 		else
 			throw std::invalid_argument("Client_max_body_size format is not valid");
 	}
-	std::cout << "client_max_body_size " <<client_max_body_size<< std::endl;
 	return (client_max_body_size);
 }
 

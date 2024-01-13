@@ -88,10 +88,20 @@ main
 	position: relative;
 	width: 300px;
 	height: 300px;
+	left: 0px;
 	border: 5px solid #3498db;
 	border-radius: 50%;
-	animation: rotateFrame 5s infinite linear;
+	animation: mymove 5s infinite;
+	animation-direction: alternate;
+	animation-timing-function: ease-in-out;
 }
+@keyframes mymove {
+	0%   {left:-200px; top:-500px;}
+	25%  {left:200px; top:-500px;}
+	50%  {left:200px; top:200px;}
+	75%  {left:-200px; top:200px;}
+	100% {left:-200px; top:-500px;}
+  }
 
 img
 {

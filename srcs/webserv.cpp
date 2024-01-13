@@ -10,14 +10,19 @@ void httpRequestTest();
 
 int main(int ac, char **av)
 {
-	(void) av;
-	if (ac != 2)
+	std::string config_file;
+
+	if (ac == 1)
+		config_file = "config.yaml"; // default config file
+	else if (ac == 2)
+		config_file = av[1];
+	else
 	{
-		std::cout << "Invalid number of arguments, please provide a configuration file" << std::endl;
+		std::cout << "Invalid number of arguments, please use: ./webserv [config_file]" << std::endl;
 		return 1;
 	}
 	try {
-		ConfigCheck		config(av[1]);
+		ConfigCheck		config(config_file);
 		ConfigParse		parse(config);
 		ServerManager	serverManager(parse.getServersParsed());
 		serverManager.launchServers();

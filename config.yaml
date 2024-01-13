@@ -1,6 +1,6 @@
 - server:
     server_name: site1.com
-    port: 8888
+    port: 7777
     client_max_body_size: 200k
     error_pages:
     - 404: webpage/error_pages/error404.html
@@ -11,7 +11,7 @@
           root: ./webpage/website1
           index: index.html
       - /images:
-          root: ./webpage/website1/images
+          root: ./webpage/images
           methods: GET
           repertory_listing: true
       - /google:
@@ -26,16 +26,16 @@
 
 - server:
     server_name: site2.com
-    port: 8889
+    port: 7778
     client_max_body_size: 200k
     error_pages:
     routes:
       - /:
           methods: GET POST
-          root: ./webpage/website1
+          root: ./webpage/website2
           index: index.html
       - /images:
-          root: ./webpage/website1/images
+          root: ./webpage/images
           methods: GET
           repertory_listing: true
       - /google:
@@ -43,6 +43,29 @@
           redirection: http://www.google.com
       - /test:
           methods: GET
-          root: ./webpage/website1/test
+          root: ./webpage/website2/test
+          index: index.html
+          cgi: .py /usr/bin/python3
+
+- server:
+    server_name: site3.com
+    port: 7779
+    client_max_body_size: 200k
+    error_pages:
+    routes:
+      - /:
+          methods: GET POST
+          root: ./webpage/website3
+          index: index.html
+      - /images:
+          root: ./webpage/images
+          methods: GET
+          repertory_listing: true
+      - /google:
+          methods: GET
+          redirection: http://www.google.com
+      - /test:
+          methods: GET
+          root: ./webpage/website3/test
           index: index.html
           cgi: .py /usr/bin/python3
