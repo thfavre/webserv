@@ -22,6 +22,16 @@
           root: ./webpage/website1/test
           index: index.html
           cgi: .py /usr/bin/python3
+        - /python:
+          methods: GET
+          root: ./webpage/website1/test/
+          index: test.py
+          cgi: .py /usr/bin/python3
+        - /perl:
+          methods: GET
+          root: ./webpage/website1/test/
+          index: test.pl
+          cgi: .pl /usr/bin/perl
 
 
 - server:
