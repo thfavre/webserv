@@ -70,7 +70,7 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 				{
 					_CGIPath = cgi[1];
 					_isCGI = true;
-					std::cout << LOG_COLOR << "[LOG] The file is a CGI" << RESET << "(path: " << _CGIPath << ")" << std::endl;
+					std::cout << LOG_COLOR << "[LOG] The file is a CGI" << RESET << " (path: " << _CGIPath << ")" << std::endl;
 				}
 				else
 				{
@@ -92,7 +92,7 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 		// Handle invalid request error
 		if (_statusCode == 0)
 			_statusCode = 400;
-		std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
+		std::cout << RED << "[ERROR] " << _statusCode << ": " << RESET << e.what() << std::endl;
 	}
 }
 

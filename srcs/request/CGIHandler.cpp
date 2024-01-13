@@ -69,8 +69,6 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		argv[0] = (char*)(CGIPath.c_str());
 		argv[1] = (char*)(_path.c_str());
 		argv[2] = NULL;
-		std::cerr << "_path: " << argv[1] << std::endl;
-		std::cerr << "argv[0 ]: " << argv[0] << std::endl;
 		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
 		perror("execve");
 		std::cerr << "execve failed" << std::endl;
@@ -106,8 +104,6 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		int readBytes;
 		while ((readBytes = read(pipefd[0], buffer, 4096)) > 0)
 		{
-			std::cout << "readBytes: " << readBytes << std::endl;
-			std::cout << "buffer: " << buffer << std::endl;
 			_output += std::string(buffer, readBytes);
 		}
 		close(pipefd[0]);
@@ -118,18 +114,13 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		}
 		return true;
 	}
-
-	// execute script
-	// communicate with child through pipes
-
-	// wait for child to finish
-	// if child is in infinite loop, kill it (> Xms)
-
 }
 
 bool CGIHandler::isCGI() const
 {
 	if (_extension == "py")
+		return true;
+	if (_extension == "pl")
 		return true;
 	return false;
 }
