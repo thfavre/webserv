@@ -113,7 +113,7 @@ std::string	Server::handleRequest(int fd, bool *keep_alive)
 	HTTPRequest	request(raw_request, _server_config);
 	Response response(request, fd, _server_config);
 
-	if (strcasecmp(request.getHeader("close").c_str(), "close") == 0)
+	if (strcasecmp(request.getHeader("Connection").c_str(), "close") == 0)
 		*keep_alive = false;
 
 	return (response.getResponse());
