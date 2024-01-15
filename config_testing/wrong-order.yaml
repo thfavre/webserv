@@ -1,0 +1,35 @@
+- server:
+    server_name: site1.com
+    client_max_body_size: 200k
+    port: 7777
+    error_pages:
+    - 404: webpage/error_pages/error404.html
+    - 405: webpage/error_pages/error405.html
+    routes:
+      - /:
+          methods: GET POST
+          root: ./webpage/website1
+          index: index.html
+          cgi: .py /usr/bin/python3
+      - /images:
+          root: ./webpage/images
+          methods: GET
+          repertory_listing: true
+      - /google:
+          methods: GET
+          redirection: http://www.google.com
+      - /test:
+          methods: GET
+          root: ./webpage/website1/test
+          index: index.html
+          cgi: .py /usr/bin/python3
+        - /python:
+          methods: GET
+          root: ./webpage/website1/test/
+          index: test.py
+          cgi: .py /usr/bin/python3
+        - /perl:
+          methods: GET
+          root: ./webpage/website1/test/
+          index: test.pl
+          cgi: .pl /usr/bin/perl

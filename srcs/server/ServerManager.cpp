@@ -34,11 +34,13 @@ void	ServerManager::launchServers()
 		if (poll(tempPollfds.data(), tempPollfds.size(), 1000) < 0)
 			throw std::runtime_error("[EXCEPTION] Poll issue");
 
+		syncFdsToTmpfds(tempPollfds);
+
 			// Check for events
-		for (size_t i = 0; i < tempPollfds.size(); ++i)
+		for (size_t i = 0; i < this->_fds.size(); ++i)
 		{
 			Server	tmpServ = getServerByName(this->_fds[i].server_name);
-			if (tempPollfds[i].revents & POLLIN)
+			if (this->_fds[i].pfd.revents & POLLIN)
 			{
 				if (this->_fds[i].is_listening_socket == true)
 				{
@@ -60,9 +62,13 @@ void	ServerManager::launchServers()
 					{
 						this->_fds[i].pfd.events = POLLOUT;
 					}
+					// else if (!this->_fds[i].keep_alive)
+					// {
+					// 	closeSingleSocket(i);
+					// }
 				}
 			}
-			else if (tempPollfds[i].revents & POLLOUT)
+			else if (this->_fds[i].pfd.revents & POLLOUT)
 			{
 				// Handle sending response to client
 				if (tmpServ.sendResponse(this->_fds[i].pfd.fd, this->_fds[i].response) == 0)
@@ -70,17 +76,20 @@ void	ServerManager::launchServers()
 					closeSingleSocket(i);
 				}
 				if (!this->_fds[i].keep_alive)
+				{
 					closeSingleSocket(i);
+				}
 				else
 					this->_fds[i].pfd.events = POLLIN;
 			}
-			else if (tempPollfds[i].revents & (POLLERR | POLLHUP))
+			else if (this->_fds[i].pfd.revents & (POLLERR | POLLHUP))
 			{
 				// Handle poll errors
 				closeSingleSocket(i);
 				std::cout << RED << "[ERROR] Closing socket " << i << " because of POLLERR | POLLHUP" << RESET << std::endl;
 			}
 		}
+		tempPollfds.clear();
 	}
 }
 
@@ -91,7 +100,7 @@ Server		&ServerManager::getServerByName(std::string &name)
 		if (it->getName() == name)
 			return *it;
 	}
-	std::cout << "server name: " << name << std::endl;
+	std::cout << "server name: " << name << std::endl;	//TODO: remove
 	throw std::runtime_error("[EXCEPTION] Can not find the server by its name");
 }
 
@@ -133,13 +142,15 @@ void		ServerManager::stopServers()
 void		ServerManager::closeSingleSocket(int index)
 {
 	if (index < 0 || static_cast<size_t>(index) >= this->_fds.size())
+	{
+		std::cerr << RED << "[ERROR] Socket not in range to be closed" << RESET << std::endl;
 		return;
+	}
 	if (this->_fds[index].pfd.fd >= 0)
 	{
+		std::cout << YELLOW << "[SOCKET] Closing socket " << this->_fds[index].pfd.fd << RESET << std::endl;
 		if (close(this->_fds[index].pfd.fd) < 0)
 			std::cerr << RED << "[ERROR] when closing the fd " << this->_fds[index].pfd.fd << RESET << std::endl;
-		else
-			std::cout << YELLOW << "[SOCKET] Closing socket " << index << RESET << std::endl;
 		this->_fds[index].pfd.fd = UNSET;
 	}
 	this->_fds.erase(this->_fds.begin() + index);
@@ -153,5 +164,15 @@ void		ServerManager::checkLogs(std::vector<struct epfd> fds)
 	{
 		std::cout << "FD " << fds[i].pfd.fd << " (listening: " << fds[i].is_listening_socket << ", name: " << fds[i].server_name << std::endl;
 		std::cout << "events of the fd " << fds[i].pfd.events << std::endl;
+	}
+}
+
+void ServerManager::syncFdsToTmpfds(const std::vector<pollfd>& tempPollfds)
+{
+	size_t tmpSize = std::min(this->_fds.size(), tempPollfds.size());
+	for (size_t i = 0; i < tmpSize; ++i)
+	{
+		this->_fds[i].pfd.events = tempPollfds[i].events;
+		this->_fds[i].pfd.revents = tempPollfds[i].revents;
 	}
 }

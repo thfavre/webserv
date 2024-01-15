@@ -37,7 +37,7 @@
 
 - server:
     server_name: site2.com
-    port: 7778
+    port: 7777
     client_max_body_size: 200k
     error_pages:
     routes:
@@ -55,28 +55,5 @@
       - /test:
           methods: GET
           root: ./webpage/website2/test
-          index: index.html
-          cgi: .py /usr/bin/python3
-
-- server:
-    server_name: site3.com
-    port: 7779
-    client_max_body_size: 200k
-    error_pages:
-    routes:
-      - /:
-          methods: GET POST
-          root: ./webpage/website3
-          index: index.html
-      - /images:
-          root: ./webpage/images
-          methods: GET
-          repertory_listing: true
-      - /google:
-          methods: GET
-          redirection: http://www.google.com
-      - /test:
-          methods: GET
-          root: ./webpage/website3/test
           index: index.html
           cgi: .py /usr/bin/python3

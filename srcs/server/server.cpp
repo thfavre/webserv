@@ -76,34 +76,67 @@ int			Server::acceptClient(int server_fd)
 	return client_fd;
 }
 
-std::string	Server::handleRequest(int fd, bool *keep_alive)
+std::string Server::handleRequest(int fd, bool* keep_alive)
 {
-	char	request_buffer[MAX_REQUEST_SIZE];
-	ssize_t		bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
-	if (bytes_received == 0)
-	{
-		std::cout << CYAN << "[LOG] Connection closed by the client on fd " << fd << RESET << std::endl;
-		return (std::string());
+	char request_buffer[MAX_REQUEST_SIZE];
+	ssize_t bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
+
+	if (bytes_received < 0) {
+		std::cerr << RED << "[ERROR] Error receiving data on fd " << fd << ": " << strerror(errno) << RESET << std::endl; //TODO: remove sterror
+		return std::string();
 	}
-	if (bytes_received == NO_SIGNAL)
-	{
-		std::cerr << RED << "[ERROR] No signal received from client on fd " << fd << ": " << strerror(errno) << RESET << std::endl;
-		std::cout << "bytes received in case of error " << bytes_received << std::endl;
-		std::cout << "and here is the fd related " << fd << std::endl;
-		// std::cerr << RED << "[ERROR] No response made, closing the socket at index " << i << " It has an fd of " << this->_fds[i].pfd.fd << RESET << std::endl;
-		return (std::string());
+
+	if (bytes_received == 0) {
+		std::cout << CYAN << "[LOG] Connection closed by the client on fd " << fd << RESET << std::endl;
+		return std::string();
 	}
 
 	std::string raw_request(request_buffer, bytes_received);
 
-	HTTPRequest	request(raw_request, _server_config);
-	Response response(request, fd, _server_config);
+	try {
+		HTTPRequest request(raw_request, _server_config);
+		Response response(request, fd, _server_config);
 
-	if (strcasecmp(request.getHeader("close").c_str(), "close") == 0) // ! TODO getHeader("Connection"), if close -> false, else true
-		*keep_alive = false;
+		if (strcasecmp(request.getHeader("Connection").c_str(), "close") == 0) {
+			*keep_alive = false;
+		}
 
-	return (response.getResponse());
+		return response.getResponse();
+	} catch (const std::exception& e) {
+		std::cerr << RED << "[ERROR] Exception during request handling on fd " << fd << ": " << e.what() << RESET << std::endl;
+		return std::string(); // or return an appropriate error response
+	}
 }
+
+
+// std::string	Server::handleRequest(int fd, bool *keep_alive)
+// {
+// 	char	request_buffer[MAX_REQUEST_SIZE];
+// 	ssize_t		bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
+// 	if (bytes_received == 0)
+// 	{
+// 		std::cout << CYAN << "[LOG] Connection closed by the client on fd " << fd << RESET << std::endl;
+// 		return (std::string());
+// 	}
+// 	if (bytes_received < 0)
+// 	{
+// 		std::cerr << RED << "[ERROR] No signal received from client on fd " << fd << ": " << strerror(errno) << RESET << std::endl;
+// 		std::cout << "bytes received in case of error " << bytes_received << std::endl;
+// 		std::cout << "and here is the fd related " << fd << std::endl;
+// 		// std::cerr << RED << "[ERROR] No response made, closing the socket at index " << i << " It has an fd of " << this->_fds[i].pfd.fd << RESET << std::endl;
+// 		return (std::string());
+// 	}
+
+// 	std::string raw_request(request_buffer, bytes_received);
+
+// 	HTTPRequest	request(raw_request, _server_config);
+// 	Response response(request, fd, _server_config);
+
+// 	if (strcasecmp(request.getHeader("close").c_str(), "close") == 0) // ! TODO getHeader("Connection"), if close -> false, else true
+// 		*keep_alive = false;
+
+// 	return (response.getResponse());
+// }
 
 int			Server::sendResponse(int fd, std::string response)
 {

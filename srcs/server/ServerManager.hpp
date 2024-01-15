@@ -2,7 +2,6 @@
 # define SERVERMANAGER_CPP
 
 #include "server.hpp"
-#include "../exception/exceptions.hpp"
 #include <sys/wait.h>
 
 class ServerManager
@@ -22,6 +21,7 @@ class ServerManager
 	ServerManager();
 	void	closeSingleSocket(int index);
 	void	stopServers();
+	void	syncFdsToTmpfds(const std::vector<pollfd>& tempPollfds);
 
 	public:
 		ServerManager(std::vector<t_server> serverConfigs);

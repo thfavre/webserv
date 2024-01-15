@@ -1,0 +1,7 @@
+- server:
+    server_name: site1.com
+    port: 7777
+    client_max_body_size: 200k
+    error_pages:
+    - 404: webpage/error_pages/error404.html
+    - 405: webpage/error_pages/error405.html

@@ -11,7 +11,6 @@
 #include "../request/HTTPRequest.hpp"
 #include "../response/Response.hpp"
 #include "../Configuration/ConfigParse.hpp"
-#include "../exception/exceptions.hpp"
 #define YELLOW "\033[33m"
 #define CYAN "\033[36m"
 #define RED "\033[31m"
@@ -28,11 +27,10 @@ class Server
 {
 	std::string				_name;
 	int						_listening_socket;
-	int						_pid;
 	int						_sockaddr_len;
 	t_server				_server_config;
 	sockaddr_in				_sockaddr;
-	pollfd					_fds[MAX_CONNECTION];
+	// pollfd					_fds[MAX_CONNECTION];
 
 	public:
 		Server();
@@ -41,19 +39,9 @@ class Server
 		~Server();
 		// Server	&operator=(const Server &src);
 
-		void		setup();
 		int			acceptClient(int server_fd);
 		std::string	handleRequest(int fd, bool *keep_alive);
 		int			sendResponse(int fd, std::string response);
-		void		run();
-		void		closeSingle(const int &index);
-		void		closeAll();
-		void		end();
-
-		// int		getPollSig();
-		int			availableFd();
-		void		setPid(int pid);
-		int			getPid();
 		int			getListeningSocket();
 		std::string	getName();
 };

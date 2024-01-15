@@ -5,9 +5,10 @@ import os
 # Définir la limite de poids du fichier (en octets)
 limit_size = 5 * 1024 * 1024  # 5 Mo
 
-form = cgi.FieldStorage()
-
 # Récupérer le fichier uploadé
+
+form =cgi.FieldStorage()
+print(form)
 uploaded_file = form['image']
 
 # Vérifier si un fichier a été soumis
@@ -15,7 +16,7 @@ if uploaded_file.filename:
 	# Vérifier la taille du fichier
 	if uploaded_file.file and uploaded_file.file.tell() <= limit_size:
 		# Déplacer le fichier vers le dossier d'images
-		upload_dir = "../images/"
+		upload_dir = "."
 		file_path = os.path.join(upload_dir, uploaded_file.filename)
 
 		with open(file_path, 'wb') as new_file:
