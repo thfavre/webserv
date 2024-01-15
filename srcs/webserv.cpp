@@ -4,7 +4,6 @@
 #include "server/ServerManager.hpp"
 #include "Configuration/ConfigCheck.hpp"
 #include "Configuration/ConfigParse.hpp"
-#include "exception/exceptions.hpp"
 
 void httpRequestTest();
 
