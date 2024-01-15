@@ -91,6 +91,7 @@ Server		&ServerManager::getServerByName(std::string &name)
 		if (it->getName() == name)
 			return *it;
 	}
+	std::cout << "server name: " << name << std::endl;
 	throw std::runtime_error("[EXCEPTION] Can not find the server by its name");
 }
 
