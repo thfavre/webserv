@@ -17,6 +17,7 @@
 #define YELLOW "\033[33m" // TODO delete
 #define CYAN "\033[36m"
 #define GREEN "\033[32m"
+#define PURPLE "\033[35m"
 #define RED "\033[31m"
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
@@ -203,8 +204,8 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 
 void HTTPRequest::_parsePath(std::string path)
 {
-	if (path.length() > 1 && path.back() == '/')
-		path.pop_back();
+	if (path.length() > 1 && path[path.length() - 1] == '/')
+		path.resize(path.length() - 1); // remove last char
 	// TODO check redirections
 	path = _getRedirectedPath(path);
 
@@ -364,7 +365,71 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 		_statusCode = 413;
 		throw HTTPRequest::InvalidRequestException("Body too long");
 	}
+	std::cout << LOG_COLOR << "[LOG] Body: " << bodyLines<< RESET << std::endl;
+	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		_parseMultiPartBody(bodyLines);
+	// else
 	_body = bodyLines;
+}
+
+void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
+{
+	// find the boundary in the headers (ub the Content-Type header) // Content-Type: multipart/form-data; boundary=---------------------------33604821252
+	std::string boundary = _getMultiPartBoundary();
+
+	// find the boundary in the bodyLines
+	std::size_t start = bodyLines.find(boundary);
+	if (start == std::string::npos)
+	{
+		_statusCode = 400; // Bad Request
+		throw HTTPRequest::InvalidRequestException("boundary start not found in body");
+	}
+	// end
+	std::size_t end = bodyLines.find(boundary+"--", start + boundary.length());
+	if (end == std::string::npos)
+	{
+		_statusCode = 400; // Bad Request
+		throw HTTPRequest::InvalidRequestException("boundary end not found in body");
+	}
+	// get the body between the boundaries
+	std::string headers_and_body = bodyLines.substr(start + boundary.length(), end - start - boundary.length());
+	std::string headers = headers_and_body.substr(0, headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)));
+	std::string body = headers_and_body.substr(headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)) + 4);
+	std::cout << PURPLE << "[LOG] Body: " << body << RESET << std::endl;
+	std::cout << YELLOW << "[LOG] Headers: " << headers << RESET << std::endl;
+	// get the filename in the Content-Disposition
+	std::size_t filename_start = headers.find("filename=");
+	if (filename_start == std::string::npos)
+	{
+		_statusCode = 400; // Bad Request
+		throw HTTPRequest::InvalidRequestException("filename not found in Content-Disposition header");
+	}
+	std::size_t filename_end = headers.find('"', filename_start + 10);
+	_post_file_name = headers.substr(filename_start + 10, filename_end - filename_start - 10);
+	std::cout << CYAN << "[LOG] Filename: " << _post_file_name << RESET << std::endl;
+
+	// get the file content
+	_post_file_content = body.substr(0, body.length() - 2);
+	std::cout << GREEN << "[LOG] File content: " << _post_file_content << RESET << std::endl;
+}
+
+std::string HTTPRequest::_getMultiPartBoundary()
+{
+	// find the boundary in the headers (ub the Content-Type header) // Content-Type: multipart/form-data; boundary=---------------------------33604821252
+	if (_headers.find("Content-Type") == _headers.end())
+	{
+		_statusCode = 400; // Bad Request
+		throw HTTPRequest::InvalidRequestException("Content-Type header not found");
+	}
+	std::string content_type = _headers.find("Content-Type")->second;
+	// checks if the boundary is in the content_type
+	std::size_t start = content_type.find("boundary=");
+	if (start == std::string::npos)
+	{
+		_statusCode = 400; // Bad Request
+		throw HTTPRequest::InvalidRequestException("boundary not found in Content-Type header");
+	}
+	return ("--" + content_type.substr(start + 9));
 }
 
 void HTTPRequest::_executeMethod()
@@ -401,22 +466,25 @@ void HTTPRequest::_executeMethod()
 	{
 		// create resource
 		// Check if file already exists
-		if (checkFileExists(_requestPath))
+		if (checkFileExists(_post_file_name)) // ! TODO put in a upload folder?
 		{
 			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
 			return;
 		}
 		// Create file
+
 		std::ofstream file;
-		file.open(_requestPath.c_str(), std::ios::out);
+		std::cout << _post_file_name << std::endl;
+		file.open(_post_file_name, std::ios::out); // TODO, it was _requestPath.c_str(), but it was not working
 
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
+			std::cout << RED << "[ERROR] " << _statusCode << ": " << RESET << "Error creating file" << std::endl;
 			return;
 		}
-		file << _body;
+		file << _post_file_content;
 		file.close();
 		_statusCode = 201; // Created
 	}

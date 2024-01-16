@@ -58,6 +58,8 @@ private:
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
 	std::string _body;							 // <html>...</html>
+	std::string _post_file_name;
+	std::string _post_file_content;
 	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
@@ -79,6 +81,8 @@ private:
 	bool _isPathLengthValid(const std::string &path, size_t maxLength);
 	void _parseHttpProtocolVersion(const std::string &httpProtocolVersion);
 	void _parseBody(const std::string &bodyLines);
+	void _parseMultiPartBody(const std::string &bodyLines);
+	std::string _getMultiPartBoundary();
 
 	// execute
 	void _executeMethod();

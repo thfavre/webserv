@@ -4,6 +4,8 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 CGIHandler::CGIHandler(const std::string &path) : _path(path), _isInfLoop(false)
 {
