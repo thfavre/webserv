@@ -408,8 +408,6 @@ void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
 	std::string headers_and_body = bodyLines.substr(start + boundary.length(), end - start - boundary.length());
 	std::string headers = headers_and_body.substr(0, headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)));
 	std::string body = headers_and_body.substr(headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)) + 4);
-	std::cout << PURPLE << "[LOG] Body: " << body << RESET << std::endl;
-	std::cout << YELLOW << "[LOG] Headers: " << headers << RESET << std::endl;
 	// get the filename in the Content-Disposition
 	std::size_t filename_start = headers.find("filename=");
 	if (filename_start == std::string::npos)
@@ -419,11 +417,11 @@ void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
 	}
 	std::size_t filename_end = headers.find('"', filename_start + 10);
 	_post_file_name = headers.substr(filename_start + 10, filename_end - filename_start - 10);
-	std::cout << CYAN << "[LOG] Filename: " << _post_file_name << RESET << std::endl;
+	// std::cout << CYAN << "[LOG] Filename: " << _post_file_name << RESET << std::endl;
 
 	// get the file content
 	_post_file_content = body.substr(0, body.length() - 2);
-	std::cout << GREEN << "[LOG] File content: " << _post_file_content << RESET << std::endl;
+	// std::cout << GREEN << "[LOG] File content: " << _post_file_content << RESET << std::endl;
 }
 
 std::string HTTPRequest::_getMultiPartBoundary()
