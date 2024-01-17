@@ -33,7 +33,6 @@ void	ServerManager::launchServers()
 
 		syncFdsToTmpfds(tempPollfds);
 
-			// Check for events
 		for (size_t i = 0; i < this->_fds.size(); ++i)
 		{
 			Server	tmpServ = getServerByName(this->_fds[i].server_name);

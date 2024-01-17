@@ -166,11 +166,12 @@ std::string Response::_setBody(const HTTPRequest &request)
 		else // The path is not a directory nor a file
 		{
 			std::cout << ERR_COLOR << "[ERROR]" << " The path is not a directory nor a file" << RESET << std::endl;
-			_statusCode = 404; // Not Found // TODO check if this is the right status code
+			_statusCode = 404;
 			return ("");
 		}
 	}
-		return ("");
+	_statusCode = 404;
+	return ("");
 }
 
 std::string Response::_setCGIBody(const std::string &path, const std::string &CGIPath, const std::list<std::string> &args)

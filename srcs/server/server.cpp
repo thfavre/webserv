@@ -81,7 +81,7 @@ std::string Server::handleRequest(int fd, bool* keep_alive)
 	ssize_t bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
 
 	if (bytes_received < 0) {
-		std::cerr << RED << "[ERROR] Error receiving data on fd " << fd << ": " << strerror(errno) << RESET << std::endl; //TODO: remove sterror
+		std::cerr << RED << "[ERROR] Error receiving data on fd " << fd << RESET << std::endl;
 		return std::string();
 	}
 

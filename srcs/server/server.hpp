@@ -17,8 +17,8 @@
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
-#define MAX_CONNECTION 500 // TODO try with 1000?
-#define MAX_REQUEST_SIZE 1000000 // needs to be big to contains an image if needed //TODO find if better way to not create a big buffer every time... // TODO delete the comment
+#define MAX_CONNECTION 500
+#define MAX_REQUEST_SIZE 1000000
 #define WAITING 0
 #define UNSET -1
 #define NO_SIGNAL -1
@@ -30,14 +30,12 @@ class Server
 	int						_sockaddr_len;
 	t_server				_server_config;
 	sockaddr_in				_sockaddr;
-	// pollfd					_fds[MAX_CONNECTION];
+	Server();
 
 	public:
-		Server();
 		Server(const t_server &server_config);
 		Server(const Server &src);
 		~Server();
-		// Server	&operator=(const Server &src);
 
 		int			acceptClient(int server_fd);
 		std::string	handleRequest(int fd, bool *keep_alive);

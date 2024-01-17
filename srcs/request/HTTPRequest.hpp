@@ -54,7 +54,7 @@ private:
 	t_server _server;
 	std::map<std::string, std::string> _configRootOptions;
 	std::string _configRoute;
-	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
+	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
 	std::map<std::string, std::string> _headers; // Host: www.google.com
