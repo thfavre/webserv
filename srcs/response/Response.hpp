@@ -26,7 +26,7 @@ class Response
 		std::string _formatResponse(const HTTPRequest &request);
 		std::string _formatGenericErrorPageHTML();
 		std::string _setBody(const HTTPRequest &request);
-		std::string _setCGIBody(const std::string &path, const std::string &cgiPath);
+		std::string _setCGIBody(const std::string &path, const std::string &cgiPath, const std::list<std::string> &args);
 		std::string _setFileBody(const std::string &path);
 		std::string _setDirectoryBody(const std::string &path, bool reperoryListing, int rootLength);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);

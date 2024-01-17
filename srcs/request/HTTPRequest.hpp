@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <list>
 #include "CGIHandler.hpp"
 #include "../Configuration/ConfigParse.hpp"
 
@@ -26,6 +27,7 @@ public:
 	// bool isError() const;
 	bool isCGI() const;
 	const std::string getCGIPath() const;
+	const std::list<std::string> &getUrlParameters() const;
 	// CGIHandler &getCGIHandler();
 
 	class InvalidRequestException : public std::exception
@@ -60,6 +62,7 @@ private:
 	std::string _body;							 // <html>...</html>
 	std::string _post_file_name;
 	std::string _post_file_content;
+	std::list<std::string> _urlParameters;
 	bool _isCGI;
 
 	// const std::map<std::string, std::string> _getHeaders() const;
@@ -83,6 +86,7 @@ private:
 	void _parseBody(const std::string &bodyLines);
 	void _parseMultiPartBody(const std::string &bodyLines);
 	std::string _getMultiPartBoundary();
+	void _parseUrlencodedBody(const std::string &bodyLine);
 
 	// execute
 	void _executeMethod();

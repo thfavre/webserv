@@ -10,7 +10,9 @@
 
 #include "../colors.hpp"
 
+// TODO put in .hpp?
 #define LINE_END "\r\n"
+#define UPLOAD_FOLDER "./webpage/images/"
 
 
 
@@ -47,7 +49,7 @@ const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPReq
 
 HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _server(server), _isCGI(false)
 {
-	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2);
+	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2); // TODO, not needed?
 	try
 	{
 		_parseRequest(requestData);
@@ -99,9 +101,11 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 
 void HTTPRequest::_parseRequest(std::string requestData)
 {
-
-	std::cout << LOG_COLOR << "[LOG] Rquest :" << RESET << std::endl;
-	std::cout << requestData << std::endl;
+	// Log infos
+	std::cout << LOG_COLOR << "[LOG] Rquest " << RESET << "(" << requestData.length() << " bytes)" << std::endl;
+	if (requestData.length() > 1000)
+		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first bytes)" << RESET << std::endl;
+	std::cout << requestData.substr(0, 1000) << std::endl;
 	std::cout << LOG_COLOR << "[LOG] End of request" << RESET << std::endl;
 
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
@@ -365,15 +369,24 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 		_statusCode = 413;
 		throw HTTPRequest::InvalidRequestException("Body too long");
 	}
-	std::cout << LOG_COLOR << "[LOG] Body: " << bodyLines<< RESET << std::endl;
-	if (_headers.find("Content-Type") != _headers.end() && _headers["Content-Type"].find("multipart/form-data") != std::string::npos)
-		_parseMultiPartBody(bodyLines);
+	if (_headers.find("Content-Type") != _headers.end())
+	{
+		if (_headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+			_parseMultiPartBody(bodyLines);
+		else if (_headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
+		{
+			_parseUrlencodedBody(bodyLines);
+		}
+		else
+			std::cout << LOG_COLOR << "[LOG] " << RESET << "Content-Type not supported" << std::endl;
+	}
 	// else
 	_body = bodyLines;
 }
 
 void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
 {
+	std::cout << LOG_COLOR << "[LOG] " << RESET << "Content-Type: multipart/form-data" << std::endl;
 	// find the boundary in the headers (ub the Content-Type header) // Content-Type: multipart/form-data; boundary=---------------------------33604821252
 	std::string boundary = _getMultiPartBoundary();
 
@@ -432,6 +445,24 @@ std::string HTTPRequest::_getMultiPartBoundary()
 	return ("--" + content_type.substr(start + 9));
 }
 
+void HTTPRequest::_parseUrlencodedBody(const std::string &bodyLines)
+{
+	std::cout << LOG_COLOR << "[LOG] " << RESET << "Content-Type: application/x-www-form-urlencoded" << std::endl;
+	std::cout << LOG_COLOR << "\t[LOG] Parameters: " << RESET  << std::endl;
+	std::vector<std::string> parameters = split(bodyLines, "&");
+	for (std::vector<std::string>::iterator parameter = parameters.begin();
+		 parameter != parameters.end(); ++parameter)
+	{
+		std::vector<std::string> parameterParts = split(*parameter, "=");
+		if (parameterParts.size() == 2)
+		{
+			std::cout << "\t\t" << parameterParts[0] << ": " << parameterParts[1] << std::endl;
+			_urlParameters.push_back(parameterParts[1]);
+		}
+	}
+}
+
+
 void HTTPRequest::_executeMethod()
 {
 	// if (_requestMethod == "GET")
@@ -466,7 +497,8 @@ void HTTPRequest::_executeMethod()
 	{
 		// create resource
 		// Check if file already exists
-		if (checkFileExists(_post_file_name)) // ! TODO put in a upload folder?
+		std::string upload_path = UPLOAD_FOLDER + _post_file_name;
+		if (checkFileExists(upload_path)) // ! TODO put in a upload folder?
 		{
 			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
@@ -476,7 +508,7 @@ void HTTPRequest::_executeMethod()
 
 		std::ofstream file;
 		std::cout << _post_file_name << std::endl;
-		file.open(_post_file_name, std::ios::out); // TODO, it was _requestPath.c_str(), but it was not working
+		file.open(upload_path, std::ios::out); // TODO, it was _requestPath.c_str(), but it was not working
 
 		if (!file.is_open())
 		{
@@ -582,6 +614,12 @@ const std::string HTTPRequest::getCGIPath() const
 {
 	return (_CGIPath);
 }
+
+const std::list<std::string> &HTTPRequest::getUrlParameters() const
+{
+	return (_urlParameters);
+}
+
 std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
 {
 	// request line

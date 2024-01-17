@@ -12,17 +12,22 @@ CGIHandler::CGIHandler(const std::string &path) : _path(path), _isInfLoop(false)
 	_parsePath();
 }
 
-
-CGIHandler &CGIHandler::operator=(const CGIHandler &other)
+CGIHandler::CGIHandler(const std::string &path, std::list<std::string> args) : _path(path), _args(args), _isInfLoop(false)
 {
-	if (this != &other)
-	{
-		_path = other._path;
-		_extension = other._extension;
-		_isInfLoop = other._isInfLoop;
-	}
-	return *this;
+	_parsePath();
 }
+
+
+// CGIHandler &CGIHandler::operator=(const CGIHandler &other)
+// {
+// 	if (this != &other)
+// 	{
+// 		_path = other._path;
+// 		_extension = other._extension;
+// 		_isInfLoop = other._isInfLoop;
+// 	}
+// 	return *this;
+// }
 
 void CGIHandler::_parsePath()
 {
@@ -70,7 +75,14 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 		char *argv[] = {};
 		argv[0] = (char*)(CGIPath.c_str());
 		argv[1] = (char*)(_path.c_str());
-		argv[2] = NULL;
+		// argv[2] = NULL;
+		int index = 2;
+		for (std::list<std::string>::const_iterator it = _args.begin(); it != _args.end(); it++)
+		{
+			argv[index] = (char*)(it->c_str());
+			index++;
+		}
+		argv[index] = NULL;
 		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
 		perror("execve");
 		std::cerr << "execve failed" << std::endl;

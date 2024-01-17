@@ -62,9 +62,9 @@ Response::Response(const HTTPRequest &request, int socketFd, const t_server &ser
 	this->_response = response;
 
 	// Log infos
-	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " char):" << std::endl;
+	std::cout << LOG_COLOR << "[LOG]" << " Response " << RESET << "(" << response.length() << " bytes):" << std::endl;
 	if (response.length() > 1000)
-		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first char)" << RESET << std::endl;
+		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first bytes)" << RESET << std::endl;
 	std::cout << response.substr(0, 1000) << std::endl;
 	std::cout << LOG_COLOR << "[LOG] End of response" << RESET << std::endl;
 
@@ -187,28 +187,28 @@ std::string Response::_setBody(const HTTPRequest &request)
 		{
 			std::cout << LOG_COLOR << "[LOG]" << " The path is a file" << RESET << std::endl;
 			if (request.isCGI())
-				return (_setCGIBody(path, request.getCGIPath()));
+				return (_setCGIBody(path, request.getCGIPath(), request.getUrlParameters()));
 			return (_setFileBody(path));
 		}
 		else // The path is not a directory nor a file
 		{
-			std::cout << ERR_COLOR << "[LOG]" << " The path is not a directory nor a file" << RESET << std::endl;
+			std::cout << ERR_COLOR << "[ERROR]" << " The path is not a directory nor a file" << RESET << std::endl;
 			_statusCode = 404; // Not Found // TODO check if this is the right status code
 			return ("");
 		}
 	}
 	else // The path doesn't exist
 	{
-		std::cout << ERR_COLOR << "[LOG]" << " The path doesn't exist" << RESET << std::endl;
+		std::cout << ERR_COLOR << "[ERROR]" << " The path '"<< RESET << path << ERR_COLOR << "' doesn't exist" << RESET << std::endl;
 		_statusCode = 404; // Not Found
 		return ("");
 	}
 }
 
-std::string Response::_setCGIBody(const std::string &path, const std::string &CGIPath)
+std::string Response::_setCGIBody(const std::string &path, const std::string &CGIPath, const std::list<std::string> &args)
 {
 		_contentType = "text/html";
-		CGIHandler cgiHandler = CGIHandler(path);
+		CGIHandler cgiHandler = CGIHandler(path, args);
 		if (cgiHandler.executeScript(CGIPath))
 		{
 			_statusCode = 200; // OK
@@ -262,8 +262,9 @@ std::string Response::_setDirectoryBody(const std::string &path, bool repertoryL
 			while ((ent = readdir(dir)) != NULL)
 			{
 				std::cout << LOG_COLOR2 << "\t" <<ent->d_name << RESET << std::endl;
-				std::string href = path + "/" + std::string(ent->d_name);
-				href = href.substr(rootLength);
+				std::string href = "images/" + std::string(ent->d_name);
+				// href = href.substr(rootLength);
+				(void)rootLength; // TODO delete the rootLength variable
 				body += "<li><a href=\"" + href + "\">" + std::string(ent->d_name) + "</a></li>";
 			}
 			closedir(dir);

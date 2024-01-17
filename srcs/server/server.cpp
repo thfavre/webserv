@@ -79,6 +79,7 @@ int			Server::acceptClient(int server_fd)
 std::string Server::handleRequest(int fd, bool* keep_alive)
 {
 	char request_buffer[MAX_REQUEST_SIZE];
+	// ! TODO throw an error if the request is too big...
 	ssize_t bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
 
 	if (bytes_received < 0) {

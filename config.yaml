@@ -13,7 +13,7 @@
           cgi: .py /usr/bin/python3
       - /images:
           root: ./webpage/images
-          methods: GET
+          methods: GET POST DELETE
           repertory_listing: true
       - /google:
           methods: GET

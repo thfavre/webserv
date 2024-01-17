@@ -17,8 +17,8 @@
 #define BOLD "\033[1m"
 #define RESET "\033[0m"
 
-#define MAX_CONNECTION 500
-#define MAX_REQUEST_SIZE 1000
+#define MAX_CONNECTION 500 // TODO try with 1000?
+#define MAX_REQUEST_SIZE 1000000 // needs to be big to contains an image if needed //TODO find if better way to not create a big buffer every time... // TODO delete the comment
 #define WAITING 0
 #define UNSET -1
 #define NO_SIGNAL -1
