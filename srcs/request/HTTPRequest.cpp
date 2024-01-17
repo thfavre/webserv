@@ -513,7 +513,7 @@ void HTTPRequest::_executeMethod()
 		if (!file.is_open())
 		{
 			_statusCode = 500; // Internal Server Error
-			std::cout << RED << "[ERROR] " << _statusCode << ": " << RESET << "Error creating file" << std::endl;
+			throw HTTPRequest::InvalidRequestException("Error creating file");
 			return;
 		}
 		file << _post_file_content;
@@ -523,13 +523,15 @@ void HTTPRequest::_executeMethod()
 	else if (_requestMethod == "DELETE")
 	{
 		// delete resource
-		if (!checkFileExists(_requestPath))
+		std::string path = getRoot() + _requestPath;
+		std::cout << PURPLE << path << std::endl;
+		if (!checkFileExists(path))
 		{
 			// File does not exist, respond with 404 Not Found
 			_statusCode = 404; // Not Found
-			return;
+			throw HTTPRequest::InvalidRequestException("File does not exist");
 		}
-		if (remove(_requestPath.c_str()) != 0)
+		if (remove(path.c_str()) != 0)
 		{
 			// Error deleting file, respond with 500 Internal Server Error
 			_statusCode = 500; // Internal Server Error

@@ -197,12 +197,12 @@ std::string Response::_setBody(const HTTPRequest &request)
 			return ("");
 		}
 	}
-	else // The path doesn't exist
-	{
-		std::cout << ERR_COLOR << "[ERROR]" << " The path '"<< RESET << path << ERR_COLOR << "' doesn't exist" << RESET << std::endl;
-		_statusCode = 404; // Not Found
+	// else // The path doesn't exist
+	// {
+	// 	std::cout << ERR_COLOR << "[ERROR]" << " The path '"<< RESET << path << ERR_COLOR << "' doesn't exist" << RESET << std::endl;
+	// 	_statusCode = 404; // Not Found
 		return ("");
-	}
+	// }
 }
 
 std::string Response::_setCGIBody(const std::string &path, const std::string &CGIPath, const std::list<std::string> &args)

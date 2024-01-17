@@ -1,47 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title> Webcerveaux </title>
-		<link rel="stylesheet" href="styles.css">
-	</head>
-	<body>
-		<header>
-			<h1> Welcome aboard, Web'Cervelas - 1</h1>
-		</header>
-		<nav>
-			<ul>
-				<li><a href="index.html">Home</a></li>
-				<li><a href="about.html">About</a></li>
-				<li><a href="picture.html">Picture</a></li>
-				<li><a href="contact.html">Contact</a></li>
-			</ul>
-		</nav>
-		<main>
-			<section id="download">
-				<h2>Download</h2>
-					<a href="images/InternetGuide.jpeg" download><button type="submit">Download</button></a>
-			</section>
 
-			<section id="upload">
-				<h2>Post method cgi</h2>
-				<form action="upload-cgi.py" method="post">
-					<input type="text" name="arg">
-					<input type="text" name="arg2">
-					<input type="submit" value="Submit">
-				</form>
-			</section>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title> Webcerveaux </title>
+	<link rel="stylesheet" href="styles.css">
+</head>
 
-			<section id="upload2">
-				<h2>Upload</h2>
-				<form action="upload.html" method="post" enctype="multipart/form-data">
-					<input type="file" name="image" accept="image/*" required>
-					<button type="submit">Upload</button>
-				</form>
-			</section>
+<body>
+	<header>
+		<h1> Welcome aboard, Web'Cervelas - 1</h1>
+	</header>
+	<nav>
+		<ul>
+			<li><a href="index.html">Home</a></li>
+			<li><a href="about.html">About</a></li>
+			<li><a href="picture.html">Picture</a></li>
+			<li><a href="images">Images</a></li>
+			<li><a href="contact.html">Contact</a></li>
+		</ul>
+	</nav>
+	<main>
+		<section id="download">
+			<h2>Download</h2>
+			<a href="images/InternetGuide.jpeg" download><button type="submit">Download</button></a>
+		</section>
 
-			<!-- <section id="delete">
+		<section id="upload">
+			<h2>Post method cgi</h2>
+			<form action="upload-cgi.py" method="post">
+				<input type="text" name="arg">
+				<input type="text" name="arg2">
+				<input type="submit" value="Submit">
+			</form>
+		</section>
+
+		<section id="upload2">
+			<h2>Upload</h2>
+			<form action="upload.html" method="post" enctype="multipart/form-data">
+				<input type="file" name="image" accept="image/*" required>
+				<button type="submit">Upload</button>
+			</form>
+		</section>
+
+		<!-- <section id="delete">
 				<h2>Delete</h2>
 				<form action="delete-cgi.py" method="delete">
 					<input type="text" name="imageId" placeholder="Image ID" required>
@@ -49,10 +52,11 @@
 				</form>
 			</section> -->
 
-		</main>
-		<footer>
-			<p> © 2023 My Website - All Rights Reserved </p>
-			<p> Don't contact us, we are shy! </p>
-		</footer>
-	</body>
+	</main>
+	<footer>
+		<p> © 2023 My Website - All Rights Reserved </p>
+		<p> Don't contact us, we are shy! </p>
+	</footer>
+</body>
+
 </html>
