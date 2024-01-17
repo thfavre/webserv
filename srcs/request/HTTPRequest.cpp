@@ -10,28 +10,14 @@
 
 #include "../colors.hpp"
 
-// TODO put in .hpp?
-#define LINE_END "\r\n"
-#define UPLOAD_FOLDER "./webpage/images/"
 
-
-
-#define YELLOW "\033[33m" // TODO delete
-#define CYAN "\033[36m"
-#define GREEN "\033[32m"
-#define PURPLE "\033[35m"
-#define RED "\033[31m"
-#define BOLD "\033[1m"
-#define RESET "\033[0m"
 
 const std::set<std::string> HTTPRequest::_initAcceptedMethods()
 {
 	std::set<std::string> methods;
 	methods.insert("GET");
 	methods.insert("POST");
-	// methods.insert("PUT");
 	methods.insert("DELETE");
-	// methods.insert("HEAD");
 	return (methods);
 }
 
@@ -49,7 +35,6 @@ const std::set<std::string> HTTPRequest::_acceptedHTTPProtocolVersions = HTTPReq
 
 HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server) : _statusCode(0), _server(server), _isCGI(false)
 {
-	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END), 2); // TODO, not needed?
 	try
 	{
 		_parseRequest(requestData);
@@ -58,7 +43,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 		_statusCode = 200;
 		if (CGIHandler(_requestPath).isCGI())
 		{
-			// TODO put that somewhere else
 			if (_configRootOptions.find("cgi") != _configRootOptions.end())
 			{
 				std::vector<std::string> cgi = split(_configRootOptions["cgi"], " ");
@@ -92,7 +76,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 	}
 	catch (InvalidRequestException &e)
 	{
-		// Handle invalid request error
 		if (_statusCode == 0)
 			_statusCode = 400;
 		std::cout << RED << "[ERROR] " << _statusCode << ": " << RESET << e.what() << std::endl;
@@ -101,7 +84,6 @@ HTTPRequest::HTTPRequest(const std::string &requestData, const t_server &server)
 
 void HTTPRequest::_parseRequest(std::string requestData)
 {
-	// Log infos
 	std::cout << LOG_COLOR << "[LOG] Rquest " << RESET << "(" << requestData.length() << " bytes)" << std::endl;
 	if (requestData.length() > 1000)
 		std::cout << LOG_COLOR2 << "(Do only contains the 1000 first bytes)" << RESET << std::endl;
@@ -109,7 +91,6 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	std::cout << LOG_COLOR << "[LOG] End of request" << RESET << std::endl;
 
 	std::vector<std::string> requestParts = split(requestData, std::string(LINE_END) + std::string(LINE_END), 2);
-	// add empty body if the body is empty
 	if (requestParts.size() == 1 && requestData.find(std::string(LINE_END) + std::string(LINE_END)) != std::string::npos)
 		requestParts.push_back("");
 	if (requestParts.size() != 2)
@@ -135,19 +116,10 @@ void HTTPRequest::_parseRequest(std::string requestData)
 	_parseRequestLine(requestLine);
 	_parseHeaders(headersWithoutRequestLine);
 	_parseBody(body);
-	// }
-	// catch (InvalidRequestException &e)
-	// {
-	// 	// Handle invalid request error
-	// 	if (_statusCode == 0)
-	// 		_statusCode = 400;
-	// 	std::cerr << "Error " << _statusCode << ": " << e.what() << std::endl;
-	// }
 }
 
-void HTTPRequest::_parseRequestLine(const std::string &requestLine) // ? TODO should return a bool instead of throwing an exception ?
+void HTTPRequest::_parseRequestLine(const std::string &requestLine)
 {
-	// ? TODO simply use a vector instead of a string stream?
 	std::string requestMethod;
 	std::string requestPath;
 	std::string httpProtocolVersion;
@@ -169,8 +141,7 @@ void HTTPRequest::_parseMethod(const std::string &method)
 		_statusCode = 501;
 		throw(HTTPRequest::InvalidRequestException("Invalid HTTP method '" + method + "'"));
 	}
-	// check if method is allowed by the config
-	// TODO get a getter from config
+
 	if (_configRootOptions.find("methods") != _configRootOptions.end())
 	{
 		std::vector<std::string> methods = split(_configRootOptions["methods"], " ");
@@ -209,16 +180,9 @@ bool HTTPRequest::_isPathLengthValid(const std::string &path, size_t maxLength)
 void HTTPRequest::_parsePath(std::string path)
 {
 	if (path.length() > 1 && path[path.length() - 1] == '/')
-		path.resize(path.length() - 1); // remove last char
-	// TODO check redirections
+		path.resize(path.length() - 1);
 	path = _getRedirectedPath(path);
 
-
-	// if (path.empty())
-	// {
-	// 	_statusCode = 400;
-	// 	throw(HTTPRequest::InvalidRequestException("No path specified"));
-	// }
 	if (!_areAllPathCharactersValid(path))
 	{
 		_statusCode = 400;
@@ -237,9 +201,7 @@ void HTTPRequest::_parsePath(std::string path)
 	_requestPath = path;
 }
 
-
-// TODO remove the return
-void HTTPRequest::_getConfigRootOptions(const std::string &requestPath) // TODO rename TODO (Should be a getter in the config) TODO find a better name?
+void HTTPRequest::_getConfigRootOptions(const std::string &requestPath)
 {
 	std::string path = requestPath;
 	std::map<std::string, std::string> options;
@@ -258,35 +220,27 @@ void HTTPRequest::_getConfigRootOptions(const std::string &requestPath) // TODO 
 					std::cout << LOG_COLOR2 << "\t" << option->first << ": " << RESET << option->second << std::endl;
 				}
 				_configRootOptions = options;
-				// requestPath // /thomas/index.html
-				_configRoute = path; // /thomas
+				_configRoute = path;
 
 				return ;
-				// for (std::map<std::string, std::string>::const_iterator option = route->second.begin();
-				// 	 option != route->second.end(); ++option)
-				// {
-				// 	options[option->first] = option->second;
-				// }
 			}
 		}
 		if (path == "/")
 		{
-			_statusCode = 400; // Bad Request
+			_statusCode = 400;
 			throw HTTPRequest::InvalidRequestException("Path (or subpath) is not in config");
 		}
 		path = path.substr(0, path.find_last_of('/'));
 		if (path.length() == 0)
 			path = "/";
 	}
-	// this code should never be reached
-	_statusCode = 400; // Bad Request
+	_statusCode = 400;
 	throw HTTPRequest::InvalidRequestException("Path or (or subpath) is not in config");
 }
 
-const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? TODO should be a getter in the config ?
+const std::string HTTPRequest::_getRedirectedPath(const std::string &path)
 {
 	std::string redirection = path;
-	// if the path is a key in the config
 	if (path == _configRoute)
 	{
 		if (_configRootOptions.find("redirection") != _configRootOptions.end())
@@ -299,7 +253,6 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 		}
 		else if (_configRootOptions.find("index") != _configRootOptions.end())
 		{
-			// redirection = path + "/" + _configRootOptions["index"];
 			redirection = "/" + _configRootOptions["index"];
 			std::cout << LOG_COLOR << "[LOG] Index found, the path is redirected to: " << RESET << redirection << std::endl;
 			return (redirection);
@@ -310,10 +263,6 @@ const std::string HTTPRequest::_getRedirectedPath(const std::string &path) // ? 
 			redirection = "/";
 	else if (redirection[0] != '/')
 		redirection = "/" + redirection;
-
-	// if (_configRootOptions.find("root") != _configRootOptions.end()) // ! TODO what append if root is not in config ?
-	// 	redirection = _configRootOptions["root"] + redirection;		 // TODO add / ?
-	// // ? TODO check if path is too long
 
 	return (redirection);
 }
@@ -358,7 +307,6 @@ void HTTPRequest::_parseHeaderLine(const std::string &headerLine)
 		_statusCode = 400;
 		throw(HTTPRequest::InvalidRequestException("Invalid header value for header '" + headerName + "'"));
 	}
-	// TODO put to lower case ? (because case insensitive)
 	_headers[headerName] = headerValue;
 }
 
@@ -380,35 +328,29 @@ void HTTPRequest::_parseBody(const std::string &bodyLines)
 		else
 			std::cout << LOG_COLOR << "[LOG] " << RESET << "Content-Type not supported" << std::endl;
 	}
-	// else
 	_body = bodyLines;
 }
 
 void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
 {
 	std::cout << LOG_COLOR << "[LOG] " << RESET << "Content-Type: multipart/form-data" << std::endl;
-	// find the boundary in the headers (ub the Content-Type header) // Content-Type: multipart/form-data; boundary=---------------------------33604821252
 	std::string boundary = _getMultiPartBoundary();
 
-	// find the boundary in the bodyLines
 	std::size_t start = bodyLines.find(boundary);
 	if (start == std::string::npos)
 	{
 		_statusCode = 400; // Bad Request
 		throw HTTPRequest::InvalidRequestException("boundary start not found in body");
 	}
-	// end
 	std::size_t end = bodyLines.find(boundary+"--", start + boundary.length());
 	if (end == std::string::npos)
 	{
 		_statusCode = 400; // Bad Request
 		throw HTTPRequest::InvalidRequestException("boundary end not found in body");
 	}
-	// get the body between the boundaries
 	std::string headers_and_body = bodyLines.substr(start + boundary.length(), end - start - boundary.length());
 	std::string headers = headers_and_body.substr(0, headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)));
 	std::string body = headers_and_body.substr(headers_and_body.find(std::string(LINE_END) + std::string(LINE_END)) + 4);
-	// get the filename in the Content-Disposition
 	std::size_t filename_start = headers.find("filename=");
 	if (filename_start == std::string::npos)
 	{
@@ -417,23 +359,18 @@ void HTTPRequest::_parseMultiPartBody(const std::string &bodyLines)
 	}
 	std::size_t filename_end = headers.find('"', filename_start + 10);
 	_post_file_name = headers.substr(filename_start + 10, filename_end - filename_start - 10);
-	// std::cout << CYAN << "[LOG] Filename: " << _post_file_name << RESET << std::endl;
 
-	// get the file content
 	_post_file_content = body.substr(0, body.length() - 2);
-	// std::cout << GREEN << "[LOG] File content: " << _post_file_content << RESET << std::endl;
 }
 
 std::string HTTPRequest::_getMultiPartBoundary()
 {
-	// find the boundary in the headers (ub the Content-Type header) // Content-Type: multipart/form-data; boundary=---------------------------33604821252
 	if (_headers.find("Content-Type") == _headers.end())
 	{
 		_statusCode = 400; // Bad Request
 		throw HTTPRequest::InvalidRequestException("Content-Type header not found");
 	}
 	std::string content_type = _headers.find("Content-Type")->second;
-	// checks if the boundary is in the content_type
 	std::size_t start = content_type.find("boundary=");
 	if (start == std::string::npos)
 	{
@@ -463,50 +400,21 @@ void HTTPRequest::_parseUrlencodedBody(const std::string &bodyLines)
 
 void HTTPRequest::_executeMethod()
 {
-	// if (_requestMethod == "GET")
-	// {
-	// 	// get resource
-	// 	// Check if file exists
-	// 	if (!checkFileExists(path))
-	// 	{
-	// 		// File does not exist, respond with 404 Not Found
-	// 		_statusCode = 404; // Not Found
-	// 		return;
-	// 	}
-	// 	// Read file
-	// 	std::ifstream file;
-	// 	file.open(path.c_str(), std::ios::in);
-	// 	if (!file.is_open())
-	// 	{
-	// 		_statusCode = 500; // Internal Server Error
-	// 		return;
-	// 	}
-	// 	std::string line;
-	// 	while (std::getline(file, line))
-	// 		_body += line;
-	// 	file.close();
-	// }
-	// else
-
 	if (_requestMethod == "GET")
 	{
 	}
 	else if (_requestMethod == "POST")
 	{
-		// create resource
-		// Check if file already exists
 		std::string upload_path = UPLOAD_FOLDER + _post_file_name;
-		if (checkFileExists(upload_path)) // ! TODO put in a upload folder?
+		if (checkFileExists(upload_path))
 		{
-			// File exists, respond with 409 Conflict
 			_statusCode = 409; // Conflict
 			return;
 		}
-		// Create file
 
 		std::ofstream file;
 		std::cout << _post_file_name << std::endl;
-		file.open(upload_path, std::ios::out); // TODO, it was _requestPath.c_str(), but it was not working
+		file.open(upload_path, std::ios::out);
 
 		if (!file.is_open())
 		{
@@ -520,18 +428,14 @@ void HTTPRequest::_executeMethod()
 	}
 	else if (_requestMethod == "DELETE")
 	{
-		// delete resource
 		std::string path = getRoot() + _requestPath;
-		std::cout << PURPLE << path << std::endl;
 		if (!checkFileExists(path))
 		{
-			// File does not exist, respond with 404 Not Found
 			_statusCode = 404; // Not Found
 			throw HTTPRequest::InvalidRequestException("File does not exist");
 		}
 		if (remove(path.c_str()) != 0)
 		{
-			// Error deleting file, respond with 500 Internal Server Error
 			_statusCode = 500; // Internal Server Error
 			return;
 		}
@@ -539,12 +443,6 @@ void HTTPRequest::_executeMethod()
 	}
 }
 
-// void HTTPRequest::_exectuteCGI()
-// {
-// 	// TODO
-// }
-
-/* ****** Getters ****** */ // ! TODO better way to write all getters (other file,..)
 const std::string &HTTPRequest::getMethod() const
 {
 	return (_requestMethod);
@@ -564,15 +462,9 @@ const std::string &HTTPRequest::getHeader(const std::string &headerName) const
 {
 	static const std::string emptyString = "";
 	if (_headers.find(headerName) == _headers.end())
-		// throw(HTTPRequest::InvalidRequestException("Header '" + headerName + "' not found")); // ? TODO should it return an empty string instead?
 		return (emptyString);
 	return (_headers.at(headerName));
 }
-
-// const std::map<std::string, std::string> HTTPRequest::_getHeaders() const
-// {
-// 	return (_headers);
-// }
 
 const std::string &HTTPRequest::getBody() const
 {
@@ -588,7 +480,6 @@ const std::string &HTTPRequest::getRoot() const
 {
 	if (_configRootOptions.find("root") == _configRootOptions.end())
 	{
-		// empty string if root is not in config
 		static const std::string noRootRoot = "./";
 		return (noRootRoot);
 	}
@@ -639,4 +530,9 @@ std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request)
 	stream << "Body: " << std::endl
 		   << request.getBody() << std::endl;
 	return (stream);
+}
+
+void	HTTPRequest::setStatusCode(int code)
+{
+	_statusCode = code;
 }

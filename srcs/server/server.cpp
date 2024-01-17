@@ -51,7 +51,6 @@ Server::Server(const t_server &server_config) : _server_config(server_config)
 
 Server::Server(const Server &src)
 {
-	// Implement copying logic here, ensuring proper duplication of resources
 	this->_name = src._name;
 	this->_server_config = src._server_config;
 }
@@ -79,7 +78,6 @@ int			Server::acceptClient(int server_fd)
 std::string Server::handleRequest(int fd, bool* keep_alive)
 {
 	char request_buffer[MAX_REQUEST_SIZE];
-	// ! TODO throw an error if the request is too big...
 	ssize_t bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
 
 	if (bytes_received < 0) {
@@ -96,6 +94,12 @@ std::string Server::handleRequest(int fd, bool* keep_alive)
 
 	try {
 		HTTPRequest request(raw_request, _server_config);
+		std::cout <<"bytes recevied: " << bytes_received << std::endl;
+		if (bytes_received >= (MAX_REQUEST_SIZE - 1))
+		{
+			std::cout << "test" << std::endl;
+			request.setStatusCode(413);
+		}
 		Response response(request, fd, _server_config);
 
 		if (strcasecmp(request.getHeader("Connection").c_str(), "close") == 0) {
@@ -105,39 +109,9 @@ std::string Server::handleRequest(int fd, bool* keep_alive)
 		return response.getResponse();
 	} catch (const std::exception& e) {
 		std::cerr << RED << "[ERROR] Exception during request handling on fd " << fd << ": " << e.what() << RESET << std::endl;
-		return std::string(); // or return an appropriate error response
+		return std::string();
 	}
 }
-
-
-// std::string	Server::handleRequest(int fd, bool *keep_alive)
-// {
-// 	char	request_buffer[MAX_REQUEST_SIZE];
-// 	ssize_t		bytes_received = recv(fd, request_buffer, MAX_REQUEST_SIZE, 0);
-// 	if (bytes_received == 0)
-// 	{
-// 		std::cout << CYAN << "[LOG] Connection closed by the client on fd " << fd << RESET << std::endl;
-// 		return (std::string());
-// 	}
-// 	if (bytes_received < 0)
-// 	{
-// 		std::cerr << RED << "[ERROR] No signal received from client on fd " << fd << ": " << strerror(errno) << RESET << std::endl;
-// 		std::cout << "bytes received in case of error " << bytes_received << std::endl;
-// 		std::cout << "and here is the fd related " << fd << std::endl;
-// 		// std::cerr << RED << "[ERROR] No response made, closing the socket at index " << i << " It has an fd of " << this->_fds[i].pfd.fd << RESET << std::endl;
-// 		return (std::string());
-// 	}
-
-// 	std::string raw_request(request_buffer, bytes_received);
-
-// 	HTTPRequest	request(raw_request, _server_config);
-// 	Response response(request, fd, _server_config);
-
-// 	if (strcasecmp(request.getHeader("close").c_str(), "close") == 0) // ! TODO getHeader("Connection"), if close -> false, else true
-// 		*keep_alive = false;
-
-// 	return (response.getResponse());
-// }
 
 int			Server::sendResponse(int fd, std::string response)
 {

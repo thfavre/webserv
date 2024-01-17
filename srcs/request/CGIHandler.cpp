@@ -17,18 +17,6 @@ CGIHandler::CGIHandler(const std::string &path, std::list<std::string> args) : _
 	_parsePath();
 }
 
-
-// CGIHandler &CGIHandler::operator=(const CGIHandler &other)
-// {
-// 	if (this != &other)
-// 	{
-// 		_path = other._path;
-// 		_extension = other._extension;
-// 		_isInfLoop = other._isInfLoop;
-// 	}
-// 	return *this;
-// }
-
 void CGIHandler::_parsePath()
 {
 	std::string::size_type dotIndex = _path.find_last_of('.');
@@ -41,7 +29,7 @@ void CGIHandler::_parsePath()
 bool CGIHandler::executeScript(std::string CGIPath) const
 {
 	int	pid;
-	int	pipefd[2]; // pipefd[0] is for reading, pipefd[1] is for writing
+	int	pipefd[2];
 
 	if (pipe(pipefd) == -1)
 	{
@@ -50,18 +38,15 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 	}
 
 
-	// create child
 	pid = fork();
 	if (pid == -1)
 	{
 		perror("fork");
 		return false;
 	}
-	else if (pid == 0) // child
+	else if (pid == 0)
 	{
-		// close read end of pipe
 		close(pipefd[0]);
-		// redirect stdout to pipe
 		if (dup2(pipefd[1], STDOUT_FILENO) == -1)
 		{
 			perror("dup2");
@@ -69,13 +54,10 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 			return false;
 		}
 		close(pipefd[1]);
-		// execute script
-		std::string _root = "./"; // TODO come from config parser
 
 		char *argv[] = {};
 		argv[0] = (char*)(CGIPath.c_str());
 		argv[1] = (char*)(_path.c_str());
-		// argv[2] = NULL;
 		int index = 2;
 		for (std::list<std::string>::const_iterator it = _args.begin(); it != _args.end(); it++)
 		{
@@ -83,15 +65,14 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 			index++;
 		}
 		argv[index] = NULL;
-		execve(argv[0], argv, NULL); // ! TODO set env and agrs variables
+		execve(argv[0], argv, NULL);
 		perror("execve");
 		std::cerr << "execve failed" << std::endl;
 
 		exit(EXIT_FAILURE);
 	}
-	else // parent
+	else
 	{
-		// close write end of pipe
 		close(pipefd[1]);
 		time_t start = time(NULL);
 
@@ -113,7 +94,6 @@ bool CGIHandler::executeScript(std::string CGIPath) const
 			}
 		}
 
-		// read from pipe
 		char buffer[4096];
 		int readBytes;
 		while ((readBytes = read(pipefd[0], buffer, 4096)) > 0)

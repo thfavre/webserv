@@ -18,10 +18,8 @@ class Response
 		t_server _server;
 		std::string _contentType;
 		std::string _getContentType(const std::string &path);
-		std::string _response; // ! TODO used?
-		// std::string _statusMessage;
-		// std::map<std::string, std::string> _headers;
-		// std::string _body;
+		std::string _response;
+
 
 		std::string _formatResponse(const HTTPRequest &request);
 		std::string _formatGenericErrorPageHTML();
@@ -30,8 +28,6 @@ class Response
 		std::string _setFileBody(const std::string &path);
 		std::string _setDirectoryBody(const std::string &path, bool reperoryListing, int rootLength);
 		std::string _setHeaders(const HTTPRequest &request, int bodyLength);
-		// std::string _getContentType(const std::string &path);
-		// void _sendResponse(int socketFd, const std::string &response);
 		bool _isError();
 };
 

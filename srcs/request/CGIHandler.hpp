@@ -17,10 +17,7 @@ class CGIHandler
 		const std::string getExtension() const;
 		std::string getScriptExecutionOutput() const;
 
-		// CGIHandler &operator=(const CGIHandler &other);
-
 	private:
-		// CGIHandler(const CGIHandler &other);
 
 		void _parsePath();
 

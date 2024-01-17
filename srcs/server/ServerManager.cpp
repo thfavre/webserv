@@ -15,9 +15,6 @@ ServerManager::ServerManager(std::vector<t_server> serverConfigs) : _serverConfi
 ServerManager::~ServerManager()
 {
 	stopServers();
-	// this->_serverConfigs.clear();
-	// this->_fds.clear();
-	// this->_servers.clear();
 }
 
 
@@ -47,25 +44,17 @@ void	ServerManager::launchServers()
 					// Handle listening socket event
 					int client_fd = tmpServ.acceptClient(this->_fds[i].pfd.fd);
 					this->_fds.push_back(makeEpfd(client_fd, this->_fds[i].server_name, false));
-					// checkLogs(this->_fds);
 				} else {
 					// Handle client socket event
-					//TODO: might need to close the socket if request says "close" in the header
 					this->_fds[i].response = tmpServ.handleRequest(this->_fds[i].pfd.fd, &this->_fds[i].keep_alive);
 					if (this->_fds[i].response.empty())
 					{
-						//TODO: closing the socket or closing the program in itself ??
 						closeSingleSocket(i);
-						// throw std::runtime_error("Issue getting request from client"); //Not sure that it is needed to throw error for these cases
 					}
 					else
 					{
 						this->_fds[i].pfd.events = POLLOUT;
 					}
-					// else if (!this->_fds[i].keep_alive)
-					// {
-					// 	closeSingleSocket(i);
-					// }
 				}
 			}
 			else if (this->_fds[i].pfd.revents & POLLOUT)
@@ -100,7 +89,6 @@ Server		&ServerManager::getServerByName(std::string &name)
 		if (it->getName() == name)
 			return *it;
 	}
-	std::cout << "server name: " << name << std::endl;	//TODO: remove
 	throw std::runtime_error("[EXCEPTION] Can not find the server by its name");
 }
 
@@ -125,10 +113,8 @@ void		ServerManager::stopServers()
 	{
 		if (this->_fds[i].pfd.fd >= 0)
 		{
-			// Check if the file descriptor is still valid
 			if (close(this->_fds[i].pfd.fd) < 0)
 			{
-				// Handle the case where closing the file descriptor fails
 				perror("Error closing file descriptor");
 			}
 			else

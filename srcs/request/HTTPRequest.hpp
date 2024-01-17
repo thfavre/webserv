@@ -8,12 +8,13 @@
 #include "CGIHandler.hpp"
 #include "../Configuration/ConfigParse.hpp"
 
-#define MAX_PATH_LENGTH 4096 // ? TODO where to put this?
+#define MAX_PATH_LENGTH 4096
+#define LINE_END "\r\n"
+#define UPLOAD_FOLDER "./webpage/images/"
 
 class HTTPRequest
 {
 public:
-	// HTTPRequest();
 	HTTPRequest(const std::string &requestData, const t_server &server);
 	friend std::ostream &operator<<(std::ostream &stream, const HTTPRequest &request);
 	const std::string &getMethod() const;
@@ -24,11 +25,10 @@ public:
 	const std::string &getRoot() const;
 	bool getReperoryListing() const;
 	const int &getStatusCode() const;
-	// bool isError() const;
 	bool isCGI() const;
 	const std::string getCGIPath() const;
 	const std::list<std::string> &getUrlParameters() const;
-	// CGIHandler &getCGIHandler();
+	void	setStatusCode(int code);
 
 	class InvalidRequestException : public std::exception
 	{
@@ -52,9 +52,8 @@ private:
 	int _statusCode;
 	std::string _CGIPath;
 	t_server _server;
-	std::map<std::string, std::string> _configRootOptions; //
+	std::map<std::string, std::string> _configRootOptions;
 	std::string _configRoute;
-	// std::string _root;
 	std::string _requestMethod;					 // GET, POST, PUT, DELETE, HEAD // TODO remove request suffix?
 	std::string _requestPath;					 // /index.html
 	std::string _httpProtocolVersion;			 // HTTP/1.1
@@ -64,8 +63,6 @@ private:
 	std::string _post_file_content;
 	std::list<std::string> _urlParameters;
 	bool _isCGI;
-
-	// const std::map<std::string, std::string> _getHeaders() const;
 
 	static const std::set<std::string> _initAcceptedMethods();
 	static const std::set<std::string> _initAcceptedHTTPProtocolVersions();
