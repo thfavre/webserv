@@ -1,5 +1,5 @@
 # webserv
-C++98 HTTP/1.1 web server from scratch.
+*C++98 HTTP/1.1 web server from scratch.*
 
 ## Overview
 **Webserv** is an HTTP server written in C++98 that complies with the HTTP/1.1 protocol. This project is an in-depth exploration of how URLs begin with HTTP and a step towards understanding the inner workings of web servers. The server is fully functional with a web browser, and follows the constraints of C++98, offering non-blocking operations and supporting essential HTTP methods such as GET, POST, and DELETE.
